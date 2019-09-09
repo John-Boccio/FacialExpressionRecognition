@@ -1,0 +1,9 @@
+{
+  "name": "facial_expression_recognition",
+  "data_loader": {
+    "expW": {
+      "image_dir": "/Users/johnboccio/Datasets/ExpW/data/image/",
+      "label_path": "/Users/johnboccio/Datasets/ExpW/data/label/label.lst"
+    }
+  }
+}
