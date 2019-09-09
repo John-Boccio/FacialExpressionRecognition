@@ -1,7 +1,6 @@
 # User added ignores
 .DS_Store
 .idea/
-datasets/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
