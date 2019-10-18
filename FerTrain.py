@@ -1,29 +1,21 @@
-from ConfigParser import *
-from data_loader import expW
+"""
+Author(s):
+    John Boccio
+Last revision:
+    10/18/2019
+Description:
+
+"""
+import data_loader as dl
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 
+ck_train = dl.CKDataset(train=True)
+fer_train = dl.FER2013Dataset(train=True)
+expw_train = dl.ExpWDataset(train=True)
 
-def show_expw_image(ax, image, face_box, expression):
-    plt.imshow(image)
-    width = face_box["right"] - face_box["left"]
-    height = face_box["bottom"] - face_box["top"]
-    box = patches.Rectangle((face_box["left"], face_box["top"]), width, height,
-                            linewidth=1, edgecolor='r', facecolor='none')
-    ax.add_patch(box)
-
-
-config = ConfigParser.get_config()
-
-expw_config = ConfigParser.get_config()["data_loader"]["expW"]
-expw_dataset = expW.ExpWDataset(image_dir=expw_config["image_dir"],
-                                label_path=expw_config["label_path"])
-
-for i in range(len(expw_dataset)):
-    sample = expw_dataset[i]
-    sample_label = sample["label"]
-    for face_id in sample["label"]:
-        fig, ax = plt.subplots(1)
-        face_label = sample_label[face_id]
-        show_expw_image(ax, sample["image"], face_label["face_box"], face_label["expression"])
-        plt.show()
+for i in range(len(expw_train)):
+    sample = expw_train[i]
+    imgplot = plt.imshow(sample["img"], cmap='gray')
+    plt.title(dl.Expression(sample["expression"]))
+    plt.show()
+    plt.clf()

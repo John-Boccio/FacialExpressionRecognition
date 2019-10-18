@@ -1,3 +1,11 @@
+"""
+Author(s):
+    John Boccio
+Last revision:
+    10/18/2019
+Description:
+    Singleton class to support parsing of our config.json.
+"""
 import json
 
 
