@@ -36,9 +36,7 @@ class ExpWDataset(Dataset):
             return
 
         # If dataset is not initialized, check if we have it pickled
-        should_pickle = Cp.ConfigParser.get_config()["data_loader"]["pickle"]
-        if should_pickle and os.path.exists("./metadata/expw/train.pickle") and \
-                os.path.exists("./metadata/expw/test.pickle"):
+        if os.path.exists("./metadata/expw/train.pickle") and os.path.exists("./metadata/expw/test.pickle"):
             ExpWDataset.__train = pickle.load(open("./metadata/expw/train.pickle", "rb"))
             ExpWDataset.__test = pickle.load(open("./metadata/expw/test.pickle", "rb"))
             return
@@ -73,7 +71,7 @@ class ExpWDataset(Dataset):
                             "bottom": int(label[5]),
                             "confidence": float(label[6])
                         },
-                        # The emotion labels follow the Expression.py enum exactly
+                        # The emotion labels follow the Expression enum exactly
                         "expression": int(label[7])
                     }
                     data.append(data_point)
@@ -89,9 +87,8 @@ class ExpWDataset(Dataset):
         ExpWDataset.__train = data[:int(len(data)*.8)]
         ExpWDataset.__test = data[int(len(data)*.8):]
 
-        if should_pickle:
-            pickle.dump(ExpWDataset.__train, open("./metadata/expw/train.pickle", "wb"))
-            pickle.dump(ExpWDataset.__test, open("./metadata/expw/test.pickle", "wb"))
+        pickle.dump(ExpWDataset.__train, open("./metadata/expw/train.pickle", "wb"))
+        pickle.dump(ExpWDataset.__test, open("./metadata/expw/test.pickle", "wb"))
 
     def __len__(self):
         if self.train:
@@ -103,10 +100,11 @@ class ExpWDataset(Dataset):
         if torch.is_tensor(item):
             item = item.tolist()
 
+        # Deep copies so the user can't mess with the dataset
         if self.train:
-            data = ExpWDataset.__train[item]
+            data = ExpWDataset.__train[item].copy()
         else:
-            data = ExpWDataset.__test[item]
+            data = ExpWDataset.__test[item].copy()
 
         image = io.imread(data["img_path"])
         sample = {
@@ -116,5 +114,5 @@ class ExpWDataset(Dataset):
         }
 
         if self.transform:
-            sample = self.transform(sample)
+            sample["img"] = self.transform(sample["img"])
         return sample

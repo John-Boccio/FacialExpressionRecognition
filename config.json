@@ -1,7 +1,6 @@
 {
   "name": "facial_expression_recognition",
   "data_loader": {
-    "pickle": true,
     "CK": {
       "image_dir": "/Users/johnboccio/Datasets/CK/cohn-kanade-images/",
       "emotion_dir": "/Users/johnboccio/Datasets/CK/Emotion/"
@@ -13,5 +12,12 @@
       "image_dir": "/Users/johnboccio/Datasets/ExpW/data/image/",
       "label_path": "/Users/johnboccio/Datasets/ExpW/data/label/label.lst"
     }
+  },
+  "main": {
+    "run": {
+      "dataset": "fer2013",
+      "model": "Fer2013V1"
+    },
+    "task": "test"
   }
 }

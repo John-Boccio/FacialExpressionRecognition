@@ -11,7 +11,7 @@ Description:
     https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data
 """
 from torch.utils.data import Dataset
-from skimage import io, transform
+from PIL import Image
 import ConfigParser as Cp
 import csv
 import numpy as np
@@ -33,9 +33,7 @@ class FER2013Dataset(Dataset):
             return
 
         # If dataset is not initialized, check if we have it pickled
-        should_pickle = Cp.ConfigParser.get_config()["data_loader"]["pickle"]
-        if should_pickle and os.path.exists("./metadata/fer2013/train.pickle") and \
-                os.path.exists("./metadata/fer2013/test.pickle"):
+        if os.path.exists("./metadata/fer2013/train.pickle") and os.path.exists("./metadata/fer2013/test.pickle"):
             FER2013Dataset.__train = pickle.load(open("./metadata/fer2013/train.pickle", "rb"))
             FER2013Dataset.__test = pickle.load(open("./metadata/fer2013/test.pickle", "rb"))
             return
@@ -52,11 +50,7 @@ class FER2013Dataset(Dataset):
 
             csv_reader = csv.reader(csv_file, delimiter=',')
             for entry in csv_reader:
-                training_set = True if entry[2] == "Training" else False
-                if training_set != train:
-                    continue
-
-                emotion = entry[0]
+                emotion = int(entry[0])
                 pixels = entry[1]
 
                 # Convert string of pixel values to image
@@ -65,18 +59,17 @@ class FER2013Dataset(Dataset):
 
                 # Create data point
                 data_point = {
-                    "img":      pixels,
-                    # The emotion labels follow the Expression.py enum exactly
-                    "expression":  emotion
+                    "img": Image.fromarray(np.uint8(pixels)),
+                    # The emotion labels follow the Expression enum exactly
+                    "expression": emotion
                 }
                 if entry[2] == "Training":
                     FER2013Dataset.__train.append(data_point)
                 else:
                     FER2013Dataset.__test.append(data_point)
 
-        if should_pickle:
-            pickle.dump(FER2013Dataset.__train, open("./metadata/fer2013/train.pickle", "wb"))
-            pickle.dump(FER2013Dataset.__test, open("./metadata/fer2013/test.pickle", "wb"))
+        pickle.dump(FER2013Dataset.__train, open("./metadata/fer2013/train.pickle", "wb"))
+        pickle.dump(FER2013Dataset.__test, open("./metadata/fer2013/test.pickle", "wb"))
 
     def __len__(self):
         if self.train:
@@ -87,13 +80,11 @@ class FER2013Dataset(Dataset):
     def __getitem__(self, item):
         if torch.is_tensor(item):
             item = item.tolist()
-
+        # Deep copies so the user can't mess with the dataset
         if self.train:
-            sample = FER2013Dataset.__train[item]
+            sample = FER2013Dataset.__train[item].copy()
         else:
-            sample = FER2013Dataset.__test[item]
-
+            sample = FER2013Dataset.__test[item].copy()
         if self.transform:
-            sample = self.transform(sample["img"])
-
+            sample["img"] = self.transform(sample["img"])
         return sample

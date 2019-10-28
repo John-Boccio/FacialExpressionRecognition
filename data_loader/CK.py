@@ -14,7 +14,7 @@ Description:
 from torch.utils.data import Dataset
 from skimage import io, transform
 import ConfigParser as Cp
-from data_loader.Expression import Expression
+from data_loader.FerDatasets import Expression
 import os
 import pickle
 import torch
@@ -33,9 +33,7 @@ class CKDataset(Dataset):
             return
 
         # If dataset is not initialized, check if we have it pickled
-        should_pickle = Cp.ConfigParser.get_config()["data_loader"]["pickle"]
-        if should_pickle and os.path.exists("./metadata/ck/train.pickle") and \
-                os.path.exists("./metadata/ck/test.pickle"):
+        if os.path.exists("./metadata/ck/train.pickle") and os.path.exists("./metadata/ck/test.pickle"):
             CKDataset.__train = pickle.load(open("./metadata/ck/train.pickle", "rb"))
             CKDataset.__test = pickle.load(open("./metadata/ck/test.pickle", "rb"))
             return
@@ -68,7 +66,7 @@ class CKDataset(Dataset):
 
                     data_point = {
                         "img_path": img_path,
-                        # Adjust the expression to match Expression.py Enum
+                        # Adjust the expression to match the Expression Enum
                         "expression": emotion
                     }
                     data.append(data_point)
@@ -77,9 +75,8 @@ class CKDataset(Dataset):
         CKDataset.__train = data[:int(len(data)*.80)]
         CKDataset.__test = data[int(len(data)*.80):]
 
-        if should_pickle:
-            pickle.dump(CKDataset.__train, open("./metadata/ck/train.pickle", "wb"))
-            pickle.dump(CKDataset.__test, open("./metadata/ck/test.pickle", "wb"))
+        pickle.dump(CKDataset.__train, open("./metadata/ck/train.pickle", "wb"))
+        pickle.dump(CKDataset.__test, open("./metadata/ck/test.pickle", "wb"))
 
     def __len__(self):
         if self.train:
@@ -91,10 +88,11 @@ class CKDataset(Dataset):
         if torch.is_tensor(item):
             item = item.tolist()
 
+        # Deep copies so the user can't mess with the dataset
         if self.train:
-            data = CKDataset.__train[item]
+            data = CKDataset.__train[item].copy()
         else:
-            data = CKDataset.__test[item]
+            data = CKDataset.__test[item].copy()
         sample = {
             "img": io.imread(data["img_path"]),
             "expression": data["expression"]
