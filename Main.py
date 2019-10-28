@@ -1,5 +1,5 @@
-import FacialExpressionRecognition.ConfigParser as Cp
-import FacialExpressionRecognition.neural_nets as nns
+import ConfigParser as Cp
+import neural_nets as nns
 import torchvision.transforms as transforms
 
 
@@ -21,4 +21,4 @@ if to_run["dataset"] == "fer2013":
         print("Invalid config.json file for main")
         exit()
 
-    nns.fer2013_train_nn(net, "metadata/neural_nets/Fer2013V1.torch")
+    nns.fer2013_test_nn(net)

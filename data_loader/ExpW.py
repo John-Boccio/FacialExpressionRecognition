@@ -18,7 +18,7 @@ Description:
 """
 from torch.utils.data import Dataset
 from skimage import io, transform
-import FacialExpressionRecognition.ConfigParser as Cp
+import ConfigParser as Cp
 import torch
 import pickle
 import os

@@ -12,7 +12,7 @@ Description:
 """
 from torch.utils.data import Dataset
 from PIL import Image
-import FacialExpressionRecognition.ConfigParser as Cp
+import ConfigParser as Cp
 import csv
 import numpy as np
 import os

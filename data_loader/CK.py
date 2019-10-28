@@ -13,8 +13,8 @@ Description:
 """
 from torch.utils.data import Dataset
 from skimage import io, transform
-import FacialExpressionRecognition.ConfigParser as Cp
-from FacialExpressionRecognition.data_loader.FerDatasets import Expression
+import ConfigParser as Cp
+from data_loader.FerDatasets import Expression
 import os
 import pickle
 import torch
