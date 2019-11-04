@@ -6,7 +6,7 @@
       "emotion_dir": "/Users/johnboccio/Datasets/CK/Emotion/"
     },
     "FER2013": {
-      "csv_path": "/Users/johnboccio/Datasets/fer2013/fer2013.csv"
+      "csv_path": "/Users/johnny/Datasets/fer2013/fer2013.csv"
     },
     "expW": {
       "image_dir": "/Users/johnboccio/Datasets/ExpW/data/image/",
