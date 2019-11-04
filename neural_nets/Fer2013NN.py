@@ -4,7 +4,7 @@ Author(s):
 Last revision:
     10/27/2019
 Description:
-
+    Neural networks used for Fer2013
 """
 from torch.utils import data
 import data_loader as dl
