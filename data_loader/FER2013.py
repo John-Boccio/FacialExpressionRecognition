@@ -33,9 +33,10 @@ class FER2013Dataset(Dataset):
             return
 
         # If dataset is not initialized, check if we have it pickled
-        if os.path.exists("./metadata/fer2013/train.pickle") and os.path.exists("./metadata/fer2013/test.pickle"):
-            FER2013Dataset.__train = pickle.load(open("./metadata/fer2013/train.pickle", "rb"))
-            FER2013Dataset.__test = pickle.load(open("./metadata/fer2013/test.pickle", "rb"))
+        if os.path.exists("./metadata/fer2013/fer2013.pickle"):
+            fer2013 = pickle.load(open("./metadata/fer2013/fer2013.pickle", "rb"))
+            FER2013Dataset.__train = fer2013["train"]
+            FER2013Dataset.__test = fer2013["test"]
             return
 
         # Initialize it the hard way
@@ -56,10 +57,11 @@ class FER2013Dataset(Dataset):
                 # Convert string of pixel values to image
                 pixels = [int(pixel) for pixel in pixels.split(' ')]
                 pixels = np.asarray(pixels).reshape((48, 48))
+                pixels = np.repeat(pixels[:, :, np.newaxis], 3, axis=2)
 
                 # Create data point
                 data_point = {
-                    "img": Image.fromarray(np.uint8(pixels)),
+                    "img": np.asarray(pixels).astype('uint8'),
                     # The emotion labels follow the Expression enum exactly
                     "expression": emotion
                 }
@@ -68,8 +70,9 @@ class FER2013Dataset(Dataset):
                 else:
                     FER2013Dataset.__test.append(data_point)
 
-        pickle.dump(FER2013Dataset.__train, open("./metadata/fer2013/train.pickle", "wb"))
-        pickle.dump(FER2013Dataset.__test, open("./metadata/fer2013/test.pickle", "wb"))
+        dump = {"train": FER2013Dataset.__train,
+                "test":  FER2013Dataset.__test}
+        pickle.dump(dump, open("./metadata/fer2013/fer2013.pickle", "wb"))
 
     def __len__(self):
         if self.train:
@@ -85,6 +88,7 @@ class FER2013Dataset(Dataset):
             sample = FER2013Dataset.__train[item].copy()
         else:
             sample = FER2013Dataset.__test[item].copy()
+        sample["img"] = Image.fromarray(sample["img"])
         if self.transform:
             sample["img"] = self.transform(sample["img"])
         return sample

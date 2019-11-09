@@ -12,9 +12,9 @@ Description:
     http://www.consortium.ri.cmu.edu/ckagree/
 """
 from torch.utils.data import Dataset
-from skimage import io, transform
+from skimage import io
 import ConfigParser as Cp
-from data_loader.FerDatasets import Expression
+from utils.FerDatasets import Expression
 import os
 import pickle
 import torch
