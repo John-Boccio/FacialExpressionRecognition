@@ -1,0 +1,16 @@
+{
+  "name": "facial_expression_recognition",
+  "data_loader": {
+    "CK": {
+      "image_dir": "F:/Users/Owner/Downloads/CK+/extended-cohn-kanade-images/cohn-kanade-images/",
+      "emotion_dir": "F:/Users/Owner/Downloads/CK+/Emotion_labels/Emotion/"
+    },
+    "FER2013": {
+      "csv_path": "C:/Users/Owner/PycharmProjects/fer2013/fer2013.csv"
+    },
+    "expW": {
+      "image_dir": "F:/Users/Owner/Downloads/data-20191117T225722Z-004/data/image/",
+      "label_path": "F:/Users/Owner/Downloads/data-20191117T225722Z-004/data/label/label.lst"
+    }
+  }
+}
