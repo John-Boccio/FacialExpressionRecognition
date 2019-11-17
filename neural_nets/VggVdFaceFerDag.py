@@ -15,9 +15,9 @@ import torch.nn as nn
 class VggVdFaceFerDag(nn.Module):
     def __init__(self):
         super(VggVdFaceFerDag, self).__init__()
-        #self.meta = {'mean': [129.186279296875, 104.76238250732422, 93.59396362304688],
-        #             'std': [1, 1, 1],
-        #             'imageSize': [224, 224, 3]}
+        self.meta = {'mean': [129.186279296875, 104.76238250732422, 93.59396362304688],
+                     'std': [1, 1, 1],
+                     'imageSize': [224, 224, 3]}
 
         self.conv1_1 = nn.Conv2d(3, 64, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1))
         self.relu1_1 = nn.ReLU()

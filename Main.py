@@ -15,12 +15,12 @@ optimizer = optim.SGD(net.parameters(), lr=0.005, momentum=0.9)
 
 transform = transforms.Compose(
             [transforms.Resize(256),
-             transforms.CenterCrop(224),
+             transforms.CenterCrop(net.meta["imageSize"][0]),
              transforms.ToTensor(),
              lambda x: x*255,
-             transforms.Normalize(mean=[129.186279296875, 104.76238250732422, 93.59396362304688], std=[1, 1, 1])])
+             transforms.Normalize(mean=net.meta["mean"], std=net.meta["std"])])
 
-trainset = dl.FER2013Dataset(train=True, tf=transform)
+trainset = dl.FER2013Dataset(train=True, tf=None)
 trainloader = data.DataLoader(trainset, batch_size=4,
                               shuffle=True, num_workers=0)
 testset = dl.FER2013Dataset(train=False, tf=transform)

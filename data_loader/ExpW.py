@@ -36,9 +36,10 @@ class ExpWDataset(Dataset):
             return
 
         # If dataset is not initialized, check if we have it pickled
-        if os.path.exists("./metadata/expw/train.pickle") and os.path.exists("./metadata/expw/test.pickle"):
-            ExpWDataset.__train = pickle.load(open("./metadata/expw/train.pickle", "rb"))
-            ExpWDataset.__test = pickle.load(open("./metadata/expw/test.pickle", "rb"))
+        if os.path.exists("./metadata/expw/expw.pickle"):
+            dataset = pickle.load(open("./metadata/expw/expw.pickle", "rb"))
+            ExpWDataset.__train = dataset['train']
+            ExpWDataset.__test = dataset['test']
             return
 
         expw_config = Cp.ConfigParser.get_config()["data_loader"]["expW"]
@@ -47,7 +48,6 @@ class ExpWDataset(Dataset):
         """
         label.lst： each line indicates an image as follows:
         image_name face_id_in_image face_box_top face_box_left face_box_right face_box_bottom face_box_confidence expression_label
-
         """
         # Dictionary which contains the labeled data for each of the images in the dataset
         data = []
@@ -87,8 +87,9 @@ class ExpWDataset(Dataset):
         ExpWDataset.__train = data[:int(len(data)*.8)]
         ExpWDataset.__test = data[int(len(data)*.8):]
 
-        pickle.dump(ExpWDataset.__train, open("./metadata/expw/train.pickle", "wb"))
-        pickle.dump(ExpWDataset.__test, open("./metadata/expw/test.pickle", "wb"))
+        dataset = {'train': ExpWDataset.__train,
+                   'test': ExpWDataset.__test}
+        pickle.dump(dataset, open("./metadata/expw/expw.pickle", "wb"))
 
     def __len__(self):
         if self.train:
