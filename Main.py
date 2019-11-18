@@ -1,6 +1,7 @@
 from torch.utils import data
 import data_loader as dl
 import neural_nets as nns
+import image_processing as ip
 import torchvision.transforms as transforms
 import torch
 import torch.nn as nn
@@ -8,6 +9,8 @@ import torch.optim as optim
 import utils as util
 import cv2
 import os
+import image_processing.ImageCrop4 as crp
+import image_processing.testequalization as norm
 
 
 # TODO: Add arg parser to configure what NN is used and assign it a task
@@ -25,7 +28,9 @@ net = nns.VggVdFaceFerDag()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.005, momentum=0.9)
 
-
+image_crop = crp.facechop(image);
+img_output = norm.normalized(image_crop);
+"""
 def facechop(image):
     facedata = 'C:\\Users\\Owner\\PycharmProjects\\FacialExpressionRecognition\\image_processing\\haarcascade_frontalface_default.xml'
     cascade = cv2.CascadeClassifier(facedata)
@@ -71,6 +76,7 @@ img_yuv = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
     cv2.imwrite(face_file_name, img_output)
     cv2.imshow('Color input image', image)
     cv2.imshow('Histogram equalized', img_output)
+"""
 
 trainset = dl.FER2013Dataset(train=True, tf=img_output)
 trainloader = data.DataLoader(trainset, batch_size=4,
