@@ -13,8 +13,9 @@ Description:
 """
 from torch.utils.data import Dataset
 from skimage import io
+from utils import DatasetType
+from utils import Expression
 import ConfigParser as Cp
-from utils.FerDatasets import Expression
 import os
 import pickle
 import torch
@@ -23,13 +24,16 @@ import torch
 class CKDataset(Dataset):
     __train = None
     __test = None
+    __validation = None
 
-    def __init__(self, train=True, tf=None):
+    def __init__(self, set_type=DatasetType.TRAIN, tf=None):
         self.transform = tf
-        self.train = train
+        self.set_type = set_type
 
         # Check if the dataset has already been initialized
-        if CKDataset.__train is not None and CKDataset.__test is not None:
+        if CKDataset.__train is not None \
+                and CKDataset.__test is not None \
+                and CKDataset.__validation is not None:
             return
 
         # If dataset is not initialized, check if we have it pickled
@@ -37,6 +41,7 @@ class CKDataset(Dataset):
             dataset = pickle.load(open("./metadata/ck/ck.pickle", "rb"))
             CKDataset.__train = dataset['train']
             CKDataset.__test = dataset['test']
+            CKDataset.__validation = dataset['validation']
             return
 
         # Initialize it the hard way
@@ -74,27 +79,37 @@ class CKDataset(Dataset):
 
         # Split into train and test
         CKDataset.__train = data[:int(len(data)*.80)]
-        CKDataset.__test = data[int(len(data)*.80):]
+        CKDataset.__test = data[int(len(data)*.80):int(len(data)*.95)]
+        CKDataset.__validation = data[int(len(data)*.95):]
 
         dataset = {'train': CKDataset.__train,
-                   'test': CKDataset.__test}
+                   'test': CKDataset.__test,
+                   'validation': CKDataset.__validation}
         pickle.dump(dataset, open("./metadata/ck/ck.pickle", "wb"))
 
     def __len__(self):
-        if self.train:
+        if self.set_type == DatasetType.TRAIN:
             return len(CKDataset.__train)
-        else:
+        elif self.set_type == DatasetType.TEST:
             return len(CKDataset.__test)
+        elif self.set_type == DatasetType.VALIDATION:
+            return len(CKDataset.__validation)
+        return -1
 
     def __getitem__(self, item):
         if torch.is_tensor(item):
             item = item.tolist()
 
         # Deep copies so the user can't mess with the dataset
-        if self.train:
+        if self.set_type == DatasetType.TRAIN:
             data = CKDataset.__train[item].copy()
-        else:
+        elif self.set_type == DatasetType.TEST:
             data = CKDataset.__test[item].copy()
+        elif self.set_type == DatasetType.VALIDATION:
+            data = CKDataset.__validation[item].copy()
+        else:
+            return None
+
         sample = {
             "img": io.imread(data["img_path"]),
             "expression": data["expression"]

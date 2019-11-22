@@ -18,21 +18,26 @@ Description:
 """
 from torch.utils.data import Dataset
 from skimage import io, transform
+from utils import DatasetType
 import ConfigParser as Cp
 import torch
 import pickle
 import os
+import warnings
 
 
 class ExpWDataset(Dataset):
     __train = None
     __test = None
+    __validation = None
 
-    def __init__(self, train=True, tf=None):
-        self.train = train
+    def __init__(self, set_type=DatasetType.TRAIN, tf=None):
+        self.set_type = set_type
         self.transform = tf
 
-        if ExpWDataset.__train is not None and ExpWDataset.__test is not None:
+        if ExpWDataset.__train is not None \
+                and ExpWDataset.__test is not None \
+                and ExpWDataset.__validation is not None:
             return
 
         # If dataset is not initialized, check if we have it pickled
@@ -40,6 +45,7 @@ class ExpWDataset(Dataset):
             dataset = pickle.load(open("./metadata/expw/expw.pickle", "rb"))
             ExpWDataset.__train = dataset['train']
             ExpWDataset.__test = dataset['test']
+            ExpWDataset.__validation = dataset['validation']
             return
 
         expw_config = Cp.ConfigParser.get_config()["data_loader"]["expW"]
@@ -58,8 +64,9 @@ class ExpWDataset(Dataset):
                 img_name = label[0]
                 file_path = os.path.join(image_dir, img_name)
                 if not os.path.isfile(file_path):
-                    print("WARNING: Label for {} present in {} but is not in {}, skipping..."
-                          .format(img_name, label_path, image_dir))
+                    warnings.warn("WARNING: Label for {} present in {} but is not in {}, skipping...".format(img_name,
+                                                                                                             label_path,
+                                                                                                             image_dir))
                 else:
                     # Add the new image to the image dictionary
                     data_point = {
@@ -84,28 +91,37 @@ class ExpWDataset(Dataset):
 
         # Split into test and training sets
         # TODO: Do this in a smarter way by making sure the test set has an even distribution of expressions
-        ExpWDataset.__train = data[:int(len(data)*.8)]
-        ExpWDataset.__test = data[int(len(data)*.8):]
+        ExpWDataset.__train = data[:int(len(data) * .8)]
+        ExpWDataset.__test = data[int(len(data) * .8):int(len(data) * .95)]
+        ExpWDataset.__validation = data[int(len(data) * .95):]
 
         dataset = {'train': ExpWDataset.__train,
-                   'test': ExpWDataset.__test}
+                   'test': ExpWDataset.__test,
+                   'validation': ExpWDataset.__validation}
         pickle.dump(dataset, open("./metadata/expw/expw.pickle", "wb"))
 
     def __len__(self):
-        if self.train:
+        if self.set_type == DatasetType.TRAIN:
             return len(ExpWDataset.__train)
-        else:
+        elif self.set_type == DatasetType.TEST:
             return len(ExpWDataset.__test)
+        elif self.set_type == DatasetType.VALIDATION:
+            return len(ExpWDataset.__validation)
+        return -1
 
     def __getitem__(self, item):
         if torch.is_tensor(item):
             item = item.tolist()
 
         # Deep copies so the user can't mess with the dataset
-        if self.train:
+        if self.set_type == DatasetType.TRAIN:
             data = ExpWDataset.__train[item].copy()
-        else:
+        elif self.set_type == DatasetType.TEST:
             data = ExpWDataset.__test[item].copy()
+        elif self.set_type == DatasetType.VALIDATION:
+            data = ExpWDataset.__validation[item].copy()
+        else:
+            return None
 
         image = io.imread(data["img_path"])
         sample = {

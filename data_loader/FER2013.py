@@ -32,7 +32,8 @@ class FER2013Dataset(Dataset):
         self.set_type = set_type
 
         # Check if the dataset has already been initialized
-        if FER2013Dataset.__train is not None and FER2013Dataset.__test is not None \
+        if FER2013Dataset.__train is not None \
+                and FER2013Dataset.__test is not None \
                 and FER2013Dataset.__validation is not None:
             return
 
