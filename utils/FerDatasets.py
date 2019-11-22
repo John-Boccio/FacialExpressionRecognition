@@ -21,6 +21,12 @@ class Expression(Enum):
     NEUTRAL = 6
 
 
+class DatasetType(Enum):
+    TRAIN = 0
+    TEST = 1
+    VALIDATION = 2
+
+
 def show_distribution(dataset, title=""):
     hist = [0]*len(Expression)
     for sample in dataset:

@@ -12,24 +12,28 @@ Description:
 """
 from torch.utils.data import Dataset
 from PIL import Image
+from utils import DatasetType
 import ConfigParser as Cp
 import csv
 import numpy as np
 import os
 import pickle
 import torch
+import warnings
 
 
 class FER2013Dataset(Dataset):
     __train = None
     __test = None
+    __validation = None
 
-    def __init__(self, train=True, tf=None):
+    def __init__(self, set_type=DatasetType.TRAIN, tf=None):
         self.transform = tf
-        self.train = train
+        self.set_type = set_type
 
         # Check if the dataset has already been initialized
-        if FER2013Dataset.__train is not None and FER2013Dataset.__test is not None:
+        if FER2013Dataset.__train is not None and FER2013Dataset.__test is not None \
+                and FER2013Dataset.__validation is not None:
             return
 
         # If dataset is not initialized, check if we have it pickled
@@ -37,11 +41,13 @@ class FER2013Dataset(Dataset):
             fer2013 = pickle.load(open("./metadata/fer2013/fer2013.pickle", "rb"))
             FER2013Dataset.__train = fer2013["train"]
             FER2013Dataset.__test = fer2013["test"]
+            FER2013Dataset.__validation = fer2013["validation"]
             return
 
         # Initialize it the hard way
         FER2013Dataset.__train = []
         FER2013Dataset.__test = []
+        FER2013Dataset.__validation = []
 
         fer2013_config = Cp.ConfigParser.get_config()["data_loader"]["FER2013"]
         # Read CSV containing images, labels, and set type
@@ -67,27 +73,41 @@ class FER2013Dataset(Dataset):
                 }
                 if entry[2] == "Training":
                     FER2013Dataset.__train.append(data_point)
-                else:
+                elif entry[2] == "PublicTest":
                     FER2013Dataset.__test.append(data_point)
+                elif entry[2] == "PrivateTest":
+                    FER2013Dataset.__test.append(data_point)
+                else:
+                    warnings.warn("Unknown dataset type: " + entry[2])
 
-        dump = {"train": FER2013Dataset.__train,
-                "test":  FER2013Dataset.__test}
+        dump = {"train":        FER2013Dataset.__train,
+                "test":         FER2013Dataset.__test,
+                "validation":   FER2013Dataset.__validation}
         pickle.dump(dump, open("./metadata/fer2013/fer2013.pickle", "wb"))
 
     def __len__(self):
-        if self.train:
+        if self.set_type == DatasetType.TRAIN:
             return len(FER2013Dataset.__train)
-        else:
+        elif self.set_type == DatasetType.TEST:
             return len(FER2013Dataset.__test)
+        elif self.set_type == DatasetType.VALIDATION:
+            return len(FER2013Dataset.__validation)
+        return -1
 
     def __getitem__(self, item):
         if torch.is_tensor(item):
             item = item.tolist()
+
         # Deep copies so the user can't mess with the dataset
-        if self.train:
+        if self.set_type == DatasetType.TRAIN:
             sample = FER2013Dataset.__train[item].copy()
-        else:
+        elif self.set_type == DatasetType.TEST:
             sample = FER2013Dataset.__test[item].copy()
+        elif self.set_type == DatasetType.VALIDATION:
+            sample = FER2013Dataset.__validation[item].copy()
+        else:
+            return None
+
         sample["img"] = Image.fromarray(sample["img"])
         if self.transform:
             sample["img"] = self.transform(sample["img"])
