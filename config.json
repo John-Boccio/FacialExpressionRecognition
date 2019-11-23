@@ -6,11 +6,11 @@
       "emotion_dir": ""
     },
     "FER2013": {
-      "csv_path": ""
+      "csv_path": "/Users/johnboccio/Datasets/fer2013/fer2013.csv"
     },
     "expW": {
-      "image_dir": "",
-      "label_path": ""
+      "image_dir": "/Users/johnboccio/Datasets/ExpW/data/image/",
+      "label_path": "/Users/johnboccio/Datasets/ExpW/data/label/label.lst"
     }
   }
 }

@@ -48,11 +48,11 @@ while(True):
     for f in faces:
         x, y = f["coord"]
         w, h = f["size"]
-        frame = cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+        frame = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
         nn_prediction = net.forward(transform(f["img"]).unsqueeze(0))
         _, predicted = torch.max(nn_prediction.data, 1)
         expression = utils.Expression(predicted.item())
-        frame = cv2.putText(frame, str(expression), (x, y-5), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        frame = cv2.putText(frame, str(expression), (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
     cv2.imshow('webcam', frame)
     if cv2.waitKey(1) & 0xFF == ord(' '):
         break
