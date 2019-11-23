@@ -11,7 +11,7 @@ import cv2
 import numpy
 
 
-def crop_faces(image, one_face=False):
+def crop_faces(image):
     face_data = "image_processing/resources/haarcascade_frontalface_default.xml"
     cascade = cv2.CascadeClassifier(face_data)
 
@@ -25,19 +25,19 @@ def crop_faces(image, one_face=False):
         x, y, w, h = [v for v in f]
         sub_face = opencv_img[y:y+h, x:x+h]
         sub_face = Image.fromarray(cv2.cvtColor(sub_face, cv2.COLOR_BGR2RGB))
-        sub_face.show()
         crop = {
             "coord": (x, y),
             "size": (w, h),
             "img": sub_face
         }
-        # Only return the first face is one_face is set to true, otherwise make a list of cropped faces
-        if one_face:
-            return crop["img"]
-
         crops.append(crop)
 
-    # If one_face was set to true and we didn't find any faces, just return the original image
-    if one_face:
-        return image
     return crops
+
+
+def crop_face_transform(image):
+    faces = crop_faces(image)
+    if len(faces) == 0:
+        return image
+    return faces[0]["img"]
+
