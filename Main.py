@@ -1,6 +1,7 @@
 from torch.utils import data
 from utils import DatasetType
 import data_loader as dl
+import image_processing
 import neural_nets as nns
 import torchvision.transforms as transforms
 import torch.nn as nn
@@ -13,10 +14,9 @@ import utils
 net = nns.VggVdFaceFerDag()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.005, momentum=0.9)
-
 transform = transforms.Compose(
-            [transforms.Resize(256),
-             transforms.CenterCrop(net.meta["imageSize"][0]),
+            [lambda x: image_processing.crop_faces(x, one_face=True),
+             transforms.Resize(net.meta["imageSize"][0]),
              transforms.ToTensor(),
              lambda x: x*255,
              transforms.Normalize(mean=net.meta["mean"], std=net.meta["std"])])

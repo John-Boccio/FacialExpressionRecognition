@@ -17,11 +17,12 @@ Description:
     https://cs.anu.edu.au/few/AFEW.html
 """
 from torch.utils.data import Dataset
-from skimage import io, transform
+from PIL import Image
 from utils import DatasetType
 import ConfigParser as Cp
 import torch
 import pickle
+import numpy
 import os
 import warnings
 
@@ -123,7 +124,7 @@ class ExpWDataset(Dataset):
         else:
             return None
 
-        image = io.imread(data["img_path"])
+        image = Image.open(data["img_path"])
         sample = {
             "img": image,
             "face_box": data["face_box"],
