@@ -41,16 +41,11 @@ def histogram_equalization(image):
     img_yuv = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
     # equalize the histogram of the Y channel
     img_yuv[:, :, 0] = cv2.equalizeHist(img_yuv[:, :, 0])
-    HE = []
     # convert the YUV image back to RGB format
     img_output = cv2.cvtColor(img_yuv, cv2.COLOR_YUV2BGR)
-    img_output= Image.fromarray(cv2.cvtColor(img_output, cv2.COLOR_BGR2RGB))
-    equalization = {
-        "img": img_output
-    }
-    HE.append(equalization)
+    img_output = Image.fromarray(cv2.cvtColor(img_output, cv2.COLOR_BGR2RGB))
 
-    return HE
+    return img_output
 
 
 def crop_face_transform(image):
