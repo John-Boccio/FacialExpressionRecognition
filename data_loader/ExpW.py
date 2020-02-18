@@ -42,8 +42,8 @@ class ExpWDataset(Dataset):
             return
 
         # If dataset is not initialized, check if we have it pickled
-        if os.path.exists("../metadata/expw/expw.pickle"):
-            dataset = pickle.load(open("../metadata/expw/expw.pickle", "rb"))
+        if os.path.exists("./metadata/expw/expw.pickle"):
+            dataset = pickle.load(open("./metadata/expw/expw.pickle", "rb"))
             ExpWDataset.__train = dataset['train']
             ExpWDataset.__test = dataset['test']
             ExpWDataset.__validation = dataset['validation']
@@ -99,7 +99,7 @@ class ExpWDataset(Dataset):
         dataset = {'train': ExpWDataset.__train,
                    'test': ExpWDataset.__test,
                    'validation': ExpWDataset.__validation}
-        pickle.dump(dataset, open("../metadata/expw/expw.pickle", "wb"))
+        pickle.dump(dataset, open("./metadata/expw/expw.pickle", "wb"))
 
     def __len__(self):
         if self.set_type == DatasetType.TRAIN:

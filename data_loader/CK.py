@@ -37,8 +37,8 @@ class CKDataset(Dataset):
             return
 
         # If dataset is not initialized, check if we have it pickled
-        if os.path.exists("../metadata/ck/ck.pickle"):
-            dataset = pickle.load(open("../metadata/ck/ck.pickle", "rb"))
+        if os.path.exists("./metadata/ck/ck.pickle"):
+            dataset = pickle.load(open("./metadata/ck/ck.pickle", "rb"))
             CKDataset.__train = dataset['train']
             CKDataset.__test = dataset['test']
             CKDataset.__validation = dataset['validation']
@@ -85,7 +85,7 @@ class CKDataset(Dataset):
         dataset = {'train': CKDataset.__train,
                    'test': CKDataset.__test,
                    'validation': CKDataset.__validation}
-        pickle.dump(dataset, open("../metadata/ck/ck.pickle", "wb"))
+        pickle.dump(dataset, open("./metadata/ck/ck.pickle", "wb"))
 
     def __len__(self):
         if self.set_type == DatasetType.TRAIN:

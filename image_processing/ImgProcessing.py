@@ -13,7 +13,7 @@ import os
 
 
 def crop_faces(image):
-    face_data = "../image_processing/resources/haarcascade_frontalface_default.xml"
+    face_data = "./image_processing/resources/haarcascade_frontalface_default.xml"
     cascade = cv2.CascadeClassifier(face_data)
 
     opencv_img = cv2.cvtColor(np.asarray(image).astype('uint8'), cv2.COLOR_RGB2BGR)
