@@ -21,8 +21,8 @@ def vggface_accuracy_benchmark(model, loader, device="cpu"):
     total = 0
     with torch.no_grad():
         for sample in loader:
-            sample.to(device)
             inputs = sample['img']
+            inputs.to(device)
             labels = sample['expression']
             nn_prediction = model.forward(inputs)
             _, predicted = torch.max(nn_prediction.data, 1)
