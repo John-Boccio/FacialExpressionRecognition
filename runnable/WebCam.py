@@ -1,11 +1,8 @@
-from torch.utils import data
+import argparse
 from PIL import Image
-from utils import DatasetType
 import cv2
-import data_loader as dl
 import image_processing
 import neural_nets as nns
-import numpy
 import torchvision.transforms as transforms
 import torch
 import torch.nn as nn
@@ -13,17 +10,23 @@ import torch.optim as optim
 import utils
 
 
-# TODO: Add arg parser to configure what NN is used and assign it a task
+parser = argparse.ArgumentParser(description="Facial Expression Recognition")
+parser.add_argument('--net',
+                    dest='net',
+                    help='Choose the CNN to use for FER',
+                    default='vgg')
+parsed = parser.parse_args()
 
-net = nns.VggVdFaceFerDag()
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.005, momentum=0.9)
-transform = transforms.Compose(
-            [image_processing.crop_face_transform,
-             transforms.Resize(net.meta["imageSize"][0]),
-             transforms.ToTensor(),
-             lambda x: x*255,
-             transforms.Normalize(mean=net.meta["mean"], std=net.meta["std"])])
+if parsed.net == 'vgg':
+    net = nns.VggVdFaceFerDag()
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(net.parameters(), lr=0.005, momentum=0.9)
+    transform = transforms.Compose(
+                [image_processing.crop_face_transform,
+                 transforms.Resize(net.meta["imageSize"][0]),
+                 transforms.ToTensor(),
+                 lambda x: x*255,
+                 transforms.Normalize(mean=net.meta["mean"], std=net.meta["std"])])
 
 """
 trainset = dl.FER2013Dataset(set_type=DatasetType.TRAIN, tf=None)

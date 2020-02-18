@@ -13,7 +13,7 @@ import os
 
 
 def crop_faces(image):
-    face_data = "image_processing/resources/haarcascade_frontalface_default.xml"
+    face_data = "../image_processing/resources/haarcascade_frontalface_default.xml"
     cascade = cv2.CascadeClassifier(face_data)
 
     opencv_img = cv2.cvtColor(np.asarray(image).astype('uint8'), cv2.COLOR_RGB2BGR)
@@ -50,8 +50,7 @@ def histogram_equalization(image):
 
 def crop_face_transform(image):
     faces = crop_faces(image)
-    faces2 = histogram_equalization(faces)
-    if len(faces2) == 0:
-        return faces
-    return faces2[0]["img"]
+    if len(faces) == 0:
+        return image
+    return faces[0]["img"]
 

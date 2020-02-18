@@ -25,5 +25,5 @@ class ConfigParser:
                             "Use ConfigParser.getConfig to get the config.json as a dict")
         # Create the instance of __config
         # This path must remain the same across all projects, do not change without moving the config.json file
-        with open('config.json') as config_file:
+        with open('../config.json') as config_file:
             ConfigParser.__config = json.load(config_file)

@@ -38,8 +38,8 @@ class FER2013Dataset(Dataset):
             return
 
         # If dataset is not initialized, check if we have it pickled
-        if os.path.exists("./metadata/fer2013/fer2013.pickle"):
-            fer2013 = pickle.load(open("./metadata/fer2013/fer2013.pickle", "rb"))
+        if os.path.exists("../metadata/fer2013/fer2013.pickle"):
+            fer2013 = pickle.load(open("../metadata/fer2013/fer2013.pickle", "rb"))
             FER2013Dataset.__train = fer2013["train"]
             FER2013Dataset.__test = fer2013["test"]
             FER2013Dataset.__validation = fer2013["validation"]
@@ -84,7 +84,7 @@ class FER2013Dataset(Dataset):
         dump = {"train":        FER2013Dataset.__train,
                 "test":         FER2013Dataset.__test,
                 "validation":   FER2013Dataset.__validation}
-        pickle.dump(dump, open("./metadata/fer2013/fer2013.pickle", "wb"))
+        pickle.dump(dump, open("../metadata/fer2013/fer2013.pickle", "wb"))
 
     def __len__(self):
         if self.set_type == DatasetType.TRAIN:

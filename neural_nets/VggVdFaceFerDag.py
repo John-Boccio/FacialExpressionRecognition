@@ -56,7 +56,7 @@ class VggVdFaceFerDag(nn.Module):
         self.relu7 = nn.ReLU()
         self.fc8 = nn.Linear(in_features=4096, out_features=7, bias=True)
 
-        state_dict = torch.load("metadata/neural_nets/vgg_vd_face_fer_dag.pth")
+        state_dict = torch.load("../metadata/neural_nets/vgg_vd_face_fer_dag.pth")
         self.load_state_dict(state_dict)
 
     def forward(self, data):
