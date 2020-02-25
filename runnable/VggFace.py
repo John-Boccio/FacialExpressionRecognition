@@ -24,6 +24,7 @@ def vggface_accuracy_benchmark(model, loader, device="cpu"):
             inputs = sample['img']
             inputs.to(device)
             labels = sample['expression']
+            labels.to(device)
             nn_prediction = model.forward(inputs)
             _, predicted = torch.max(nn_prediction.data, 1)
             total += labels.size(0)
