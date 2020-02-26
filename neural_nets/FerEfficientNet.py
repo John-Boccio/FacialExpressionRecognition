@@ -2,17 +2,17 @@ import data_loader as dl
 from efficientnet_pytorch import EfficientNet, utils
 import torch
 import torch.nn as nn
-from utils import FerDatasets
+from utils import FerUtils
 
 
 class FerEfficientNet(nn.Module):
     def __init__(self):
         super(FerEfficientNet, self).__init__()
         self.conv_net = EfficientNet.from_pretrained('efficientnet-b7',
-                                                     num_classes=len(FerDatasets.Expression),
+                                                     num_classes=len(FerUtils.Expression),
                                                      in_channels=3)
         # We will keep the conv layers and create new fully connected layers for transfer learning on FER
-        for param in self.conv_net:
+        for param in self.conv_net.parameters():
             param.requires_grad = False
 
         # Conv layers output [1, 2560, 18, 18] for efficientnet-b7
@@ -21,7 +21,7 @@ class FerEfficientNet(nn.Module):
         self.fc1 = nn.Linear(in_features=2560*9*9, out_features=1000, bias=True)
         self.fc1_swish = utils.MemoryEfficientSwish()
         self.dropout2 = nn.Dropout(p=0.9)
-        self.fc2 = nn.Linear(in_features=1000, out_features=len(FerDatasets.Expression), bias=True)
+        self.fc2 = nn.Linear(in_features=1000, out_features=len(FerUtils.Expression), bias=True)
         self.fc2_swish = utils.MemoryEfficientSwish()
 
     def forward(self, inputs):

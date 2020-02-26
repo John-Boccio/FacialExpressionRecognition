@@ -75,15 +75,15 @@ class FER2013Dataset(Dataset):
                 if entry[2] == "Training":
                     FER2013Dataset.__train.append(data_point)
                 elif entry[2] == "PublicTest":
-                    FER2013Dataset.__test.append(data_point)
+                    FER2013Dataset.__validation.append(data_point)
                 elif entry[2] == "PrivateTest":
                     FER2013Dataset.__test.append(data_point)
                 else:
                     warnings.warn("Unknown dataset type: " + entry[2])
 
         dump = {"train":        FER2013Dataset.__train,
-                "test":         FER2013Dataset.__test,
-                "validation":   FER2013Dataset.__validation}
+                "validation":   FER2013Dataset.__validation,
+                "test":         FER2013Dataset.__test}
         pickle.dump(dump, open("./metadata/fer2013/fer2013.pickle", "wb"))
 
     def __len__(self):
