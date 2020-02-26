@@ -33,7 +33,7 @@ def main():
     print(" - Initializing on device: ", device)
 
     print(" - Initializing FER EfficientNet")
-    model = FerEfficientNet()
+    model = FerEfficientNet(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
     model.to(device)

@@ -6,11 +6,12 @@ from utils import FerUtils
 
 
 class FerEfficientNet(nn.Module):
-    def __init__(self):
+    def __init__(self, device=torch.device("cpu")):
         super(FerEfficientNet, self).__init__()
         self.conv_net = EfficientNet.from_pretrained('efficientnet-b7',
                                                      num_classes=len(FerUtils.Expression),
                                                      in_channels=3)
+        self.conv_net.to(device)
         # We will keep the conv layers and create new fully connected layers for transfer learning on FER
         for param in self.conv_net.parameters():
             param.requires_grad = False
