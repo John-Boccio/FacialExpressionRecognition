@@ -42,7 +42,7 @@ def main():
 
     if args.eval:
         print("Performing evaluation of FER EfficientNet using FER2013 validation set...")
-        accuracy = FerUtils.validate(val_loader, model, criterion)
+        accuracy = FerUtils.validate(val_loader, model, criterion, device=device)
         print("Accuracy: {} %", accuracy)
         return
 
