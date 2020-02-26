@@ -36,8 +36,8 @@ def main():
     model = FerEfficientNet(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
-    model.to(device)
-    criterion.to(device)
+    model = model.to(device)
+    criterion = criterion.to(device)
     print()
 
     if args.eval:

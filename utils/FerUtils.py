@@ -49,10 +49,8 @@ def train(model, train_loader, criterion, optimizer, losses=None, device=torch.d
     model.train()
     running_loss = 0.0
     for i, sample in enumerate(train_loader):
-        images = sample['img']
-        labels = sample['expression']
-        images.to(device)
-        labels.to(device)
+        images = sample['img'].to(device)
+        labels = sample['expression'].to(device)
 
         output = model(images)
         loss = criterion(output, labels)
@@ -76,10 +74,8 @@ def validate(val_loader, model, criterion, device=torch.device("cpu")):
 
     with torch.no_grad():
         for i, sample in enumerate(val_loader):
-            images = sample['img']
-            labels = sample['expression']
-            images.to(device)
-            labels.to(device)
+            images = sample['img'].to(device)
+            labels = sample['expression'].to(device)
 
             output = model.forward(images)
             loss = criterion(output, labels)
