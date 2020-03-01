@@ -4,6 +4,10 @@ import random
 import time
 import warnings
 
+from pandas_ml import ConfusionMatrix
+
+import matplotlib.pyplot as plt
+
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -180,7 +184,7 @@ def main_worker(gpu, ngpus_per_node, args):
         num_workers=args.workers, pin_memory=True)
 
     if args.evaluate:
-        validate(val_loader, model, criterion, args)
+        validate(val_loader, model, criterion, args, conf_mat=True)
         return
 
     for epoch in range(args.start_epoch, args.epochs):
@@ -254,7 +258,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             progress.display(i)
 
 
-def validate(val_loader, model, criterion, args):
+def validate(val_loader, model, criterion, args, conf_mat=False):
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     acc = AverageMeter('Acc', ':6.2f')
@@ -262,6 +266,10 @@ def validate(val_loader, model, criterion, args):
         len(val_loader),
         [batch_time, losses, acc],
         prefix='Test: ')
+    if conf_mat:
+        mat = ConfusionMat()
+    else:
+        mat = None
 
     # switch to evaluate mode
     model.eval()
@@ -290,12 +298,17 @@ def validate(val_loader, model, criterion, args):
             batch_time.update(time.time() - end)
             end = time.time()
 
+            if mat is not None:
+                _, predicted = torch.max(output.data, 1)
+                mat.update(target.tolist(), predicted.tolist(), extend=True)
+
             if i % args.print_freq == 0:
                 progress.display(i)
 
+    if mat is not None:
+        mat.display()
+
     return acc.avg
-
-
 
 
 class AverageMeter(object):
@@ -337,6 +350,29 @@ class ProgressMeter(object):
         num_digits = len(str(num_batches // 1))
         fmt = '{:' + str(num_digits) + 'd}'
         return '[' + fmt + '/' + fmt.format(num_batches) + ']'
+
+
+class ConfusionMat(object):
+    def __init__(self):
+        self.actual = []
+        self.pred = []
+        self.mat = None
+
+    def create_conf_mat(self):
+        self.mat = ConfusionMatrix(self.actual, self.pred)
+
+    def display(self):
+        self.create_conf_mat()
+        self.mat.plot(normalized=True)
+        plt.show()
+
+    def update(self, actual, pred, extend=False):
+        if extend:
+            self.actual.extend(actual)
+            self.pred.extend(pred)
+        else:
+            self.actual.append(actual)
+            self.pred.append(pred)
 
 
 def adjust_learning_rate(optimizer, epoch, args):
