@@ -6,7 +6,6 @@ import warnings
 
 import seaborn
 from pandas_ml import ConfusionMatrix
-
 import matplotlib.pyplot as plt
 
 import torch
@@ -367,7 +366,7 @@ class ConfusionMat(object):
 
     def save(self):
         self.create_conf_mat()
-        self.mat.plot(normalized=True, backend='seaborn')
+        self.mat.plot(normalized=True, annot=True, backend='seaborn', cmap=plt.get_cmap('Blues'))
         plt.savefig("conf_mat.png")
 
     def update(self, actual, pred, extend=False):
