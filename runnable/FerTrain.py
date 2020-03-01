@@ -4,6 +4,7 @@ import random
 import time
 import warnings
 
+import seaborn
 from pandas_ml import ConfusionMatrix
 
 import matplotlib.pyplot as plt
@@ -366,7 +367,7 @@ class ConfusionMat(object):
 
     def save(self):
         self.create_conf_mat()
-        self.mat.plot(normalized=True)
+        self.mat.plot(normalized=True, backend='seaborn')
         plt.savefig("conf_mat.png")
 
     def update(self, actual, pred, extend=False):
