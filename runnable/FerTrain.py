@@ -23,6 +23,7 @@ import torchvision.models as models
 
 import data_loader as dl
 import neural_nets
+from utils import Expression
 from utils import DatasetType
 
 model_names = [
@@ -300,13 +301,15 @@ def validate(val_loader, model, criterion, args, conf_mat=False):
 
             if mat is not None:
                 _, predicted = torch.max(output.data, 1)
-                mat.update(target.tolist(), predicted.tolist(), extend=True)
+                a = [Expression(i).name for i in target.tolist()]
+                p = [Expression(i).name for i in predicted.tolist()]
+                mat.update(a, p, extend=True)
 
             if i % args.print_freq == 0:
                 progress.display(i)
 
     if mat is not None:
-        mat.display()
+        mat.save()
 
     return acc.avg
 
@@ -361,10 +364,10 @@ class ConfusionMat(object):
     def create_conf_mat(self):
         self.mat = ConfusionMatrix(self.actual, self.pred)
 
-    def display(self):
+    def save(self):
         self.create_conf_mat()
         self.mat.plot(normalized=True)
-        plt.show()
+        plt.savefig("conf_mat.png")
 
     def update(self, actual, pred, extend=False):
         if extend:
