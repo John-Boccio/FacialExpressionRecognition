@@ -4,7 +4,7 @@ import random
 import time
 import warnings
 
-import seaborn
+import numpy as np
 from pandas_ml import ConfusionMatrix
 import matplotlib.pyplot as plt
 
@@ -36,7 +36,7 @@ parser.add_argument('-a', '--arch', dest='arch', metavar='ARCH', default='vggfac
                     choices=model_names,
                     help='model architecture: ' +
                         ' | '.join(model_names) +
-                        ' (default: resnet18)')
+                        ' (default: vggface)')
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 parser.add_argument('--epochs', default=45, type=int, metavar='N',
@@ -55,8 +55,8 @@ parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
 parser.add_argument('--wd', '--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',
                     dest='weight_decay')
-parser.add_argument('-p', '--print-freq', default=5, type=int,
-                    metavar='N', help='print frequency (default: 5)')
+parser.add_argument('-p', '--print-freq', default=10, type=int,
+                    metavar='N', help='print frequency (default: 10)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--save', default='model.pth', type=str, metavar='save-path', dest='save_path',
@@ -146,7 +146,8 @@ def main_worker(gpu, ngpus_per_node, args):
                                 weight_decay=args.weight_decay)
 
     best_acc = 0
-    loss_per_epoch = []
+    train_losses = []
+    val_losses = []
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
@@ -159,7 +160,8 @@ def main_worker(gpu, ngpus_per_node, args):
                 checkpoint = torch.load(args.resume, map_location=loc)
             args.start_epoch = checkpoint['epoch']
             best_acc = checkpoint['best_acc']
-            loss_per_epoch = checkpoint['loss_per_epoch']
+            train_losses = checkpoint['train_losses']
+            val_losses = checkpoint['val_losses']
             if args.gpu is not None:
                 # best_acc may be from a checkpoint from a different GPU
                 best_acc = best_acc.to(args.gpu)
@@ -188,15 +190,17 @@ def main_worker(gpu, ngpus_per_node, args):
         validate(val_loader, model, criterion, args, conf_mat=True)
         return
 
+    early_stop = EarlyStopping()
     for epoch in range(args.start_epoch, args.epochs):
         adjust_learning_rate(optimizer, epoch, args)
 
         # train for one epoch
-        train(train_loader, model, criterion, optimizer, epoch, args)
+        loss, acc = train(train_loader, model, criterion, optimizer, epoch, args)
+        train_losses.append(loss)
 
         # evaluate on validation set
-        acc = validate(val_loader, model, criterion, args)
-        loss_per_epoch.append(acc)
+        loss, acc = validate(val_loader, model, criterion, args)
+        val_losses.append(loss)
 
         # remember best acc and save checkpoint
         if acc > best_acc:
@@ -206,10 +210,16 @@ def main_worker(gpu, ngpus_per_node, args):
                 'arch': args.arch,
                 'state_dict': model.state_dict(),
                 'best_acc': best_acc,
-                'loss': loss_per_epoch,
+                'train_losses': train_losses,
+                'val_losses': val_losses,
                 'optimizer': optimizer.state_dict(),
             }
             torch.save(save_checkpoint, args.save_path)
+
+        early_stop(acc)
+        if early_stop.early_stop:
+            print("Early Stopping detected, training ended")
+            break
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
@@ -257,6 +267,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
         if i % args.print_freq == 0:
             progress.display(i)
+
+    return losses.avg, acc.avg
 
 
 def validate(val_loader, model, criterion, args, conf_mat=False):
@@ -311,7 +323,7 @@ def validate(val_loader, model, criterion, args, conf_mat=False):
     if mat is not None:
         mat.save()
 
-    return acc.avg
+    return loss.avg, acc.avg
 
 
 class AverageMeter(object):
@@ -376,6 +388,43 @@ class ConfusionMat(object):
         else:
             self.actual.append(actual)
             self.pred.append(pred)
+
+
+class EarlyStopping:
+    """ Modified version of https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py """
+    """ Early stops the training if validation loss doesn't improve after a given patience. """
+    def __init__(self, patience=7, verbose=False, delta=0):
+        """
+        Args:
+            patience (int): How long to wait after last time validation loss improved.
+                            Default: 7
+            verbose (bool): If True, prints a message for each validation loss improvement.
+                            Default: False
+            delta (float): Minimum change in the monitored quantity to qualify as an improvement.
+                            Default: 0
+        """
+        self.patience = patience
+        self.verbose = verbose
+        self.counter = 0
+        self.best_score = None
+        self.early_stop = False
+        self.val_loss_min = np.Inf
+        self.delta = delta
+
+    def __call__(self, val_loss):
+
+        score = -val_loss
+
+        if self.best_score is None:
+            self.best_score = score
+        elif score < self.best_score + self.delta:
+            self.counter += 1
+            # print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_score = score
+            self.counter = 0
 
 
 def adjust_learning_rate(optimizer, epoch, args):
