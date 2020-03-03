@@ -28,8 +28,9 @@ class FerEfficientNet(nn.Module):
     def forward(self, inputs):
         # Conv layers --> outputs [1, 2560, 18, 18]
         x = self.conv_net.extract_features(inputs)
-        x = self.max_pool(x)
+        x = self.avg_pool(x)
         x = self.dropout1(x)
+        x = x.view(-1, 2560)
         x = self.fc1(x)
         x = self.fc1_swish(x)
         x = self.dropout2(x)
