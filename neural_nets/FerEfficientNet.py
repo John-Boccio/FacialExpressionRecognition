@@ -16,21 +16,19 @@ class FerEfficientNet(nn.Module):
         for param in self.conv_net.parameters():
             param.requires_grad = False
 
-        # Conv layers output [1, 2560, 18, 18] for efficientnet-b4
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.dropout1 = nn.Dropout2d(p=0.9)
-        self.fc1 = nn.Linear(in_features=2560, out_features=1000, bias=True)
+        self.fc1 = nn.Linear(in_features=1752, out_features=1000, bias=True)
         self.fc1_swish = utils.MemoryEfficientSwish()
         self.dropout2 = nn.Dropout(p=0.9)
         self.fc2 = nn.Linear(in_features=1000, out_features=len(FerUtils.Expression), bias=True)
         self.fc2_swish = utils.MemoryEfficientSwish()
 
     def forward(self, inputs):
-        # Conv layers --> outputs [1, 2560, 18, 18]
         x = self.conv_net.extract_features(inputs)
         x = self.avg_pool(x)
         x = self.dropout1(x)
-        x = x.view(-1, 2560)
+        x = x.view(-1, 1752)
         x = self.fc1(x)
         x = self.fc1_swish(x)
         x = self.dropout2(x)

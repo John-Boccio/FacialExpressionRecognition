@@ -323,7 +323,7 @@ def validate(val_loader, model, criterion, args, conf_mat=False):
     if mat is not None:
         mat.save()
 
-    return loss.avg, acc.avg
+    return losses.avg, acc.avg
 
 
 class AverageMeter(object):
