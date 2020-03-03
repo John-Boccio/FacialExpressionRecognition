@@ -28,7 +28,7 @@ from utils import DatasetType
 
 model_names = [
     'vggface',
-    'efficientnet-b7'
+    'efficientnet-b4'
 ]
 
 parser = argparse.ArgumentParser(description='PyTorch FER Training')
@@ -111,7 +111,7 @@ def main_worker(gpu, ngpus_per_node, args):
         if args.evaluate is not True:
             warnings.warn("Cannot train vggface, changing settings to evaluation mode")
             args.evaluate = True
-    elif args.arch == 'efficientnet-b7':
+    elif args.arch == 'efficientnet-b4':
         model = neural_nets.FerEfficientNet()
         train_transform = transforms.Compose(
             [transforms.Resize(600),
