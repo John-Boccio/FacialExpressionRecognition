@@ -32,7 +32,6 @@ class FerPlusExpression(Enum):
     FEAR = 6
     CONTEMPT = 7
     UNKNOWN = 8
-    NF = 9
 
 
 class DatasetType(Enum):

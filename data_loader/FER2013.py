@@ -83,7 +83,7 @@ class FER2013Dataset(Dataset):
                     plus_entry = next(ferplus_reader)
                     exp_distribution = [int(e) for e in plus_entry[2:]]
                     exp = np.argmax(exp_distribution)
-                    if exp == FerUtils.FerPlusExpression.NF.value:
+                    if exp == 9:    # Not labeled identifier
                         continue
                     data_point["expression"] = exp
 

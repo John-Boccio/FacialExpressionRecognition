@@ -2,7 +2,7 @@
 Author(s):
     John Boccio
 Last revision:
-    3/3/2020
+    3/4/2020
 Description:
     A large portion of this has been taken from PyTorch's ImageNet example and changed for FER
     (https://github.com/pytorch/examples/blob/master/imagenet/main.py)
@@ -16,7 +16,7 @@ import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
-# from pandas_ml import ConfusionMatrix
+import sklearn.metrics
 from efficientnet_pytorch import EfficientNet, utils
 
 import torch
@@ -211,8 +211,6 @@ def main_worker(gpu, ngpus_per_node, args):
 
     early_stop = EarlyStopping(patience=args.patience)
     for epoch in range(start_epoch, args.epochs):
-        adjust_learning_rate(optimizer, epoch, args)
-
         # train for one epoch
         loss, acc = train(train_loader, model, criterion, optimizer, epoch, args)
         train_losses.append(loss)
@@ -312,7 +310,7 @@ def validate(val_loader, model, criterion, args, conf_mat=False):
         [batch_time, losses, acc],
         prefix='Test: ')
     if conf_mat:
-        mat = None # ConfusionMat()
+        mat = ConfusionMat()
     else:
         mat = None
 
@@ -399,19 +397,16 @@ class ProgressMeter(object):
         return '[' + fmt + '/' + fmt.format(num_batches) + ']'
 
 
-"""
 class ConfusionMat(object):
     def __init__(self):
         self.actual = []
         self.pred = []
-        self.mat = None
-
-    def create_conf_mat(self):
-        self.mat = ConfusionMatrix(self.actual, self.pred)
 
     def save(self):
-        self.create_conf_mat()
-        self.mat.plot(normalized=True, annot=True, backend='seaborn', cmap=plt.get_cmap('Blues'))
+        mat = sklearn.metrics.confusion_matrix(self.actual, self.pred)
+        display = sklearn.metrics.ConfusionMatrixDisplay(confusion_matrix=mat,
+                                                         display_labels=[n for n, _ in vars(FerPlusExpression).items()])
+        display = display.plot()
         plt.savefig("conf_mat.png")
 
     def update(self, actual, pred, extend=False):
@@ -421,7 +416,6 @@ class ConfusionMat(object):
         else:
             self.actual.append(actual)
             self.pred.append(pred)
-"""
 
 
 class EarlyStopping:
@@ -459,13 +453,6 @@ class EarlyStopping:
         else:
             self.best_score = score
             self.counter = 0
-
-
-def adjust_learning_rate(optimizer, epoch, args):
-    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-    lr = args.lr * (0.1 ** (epoch // 30))
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = lr
 
 
 def accuracy(output, target):
