@@ -186,6 +186,7 @@ def main_worker(gpu, ngpus_per_node, args):
                 best_acc = best_acc.to(args.gpu)
             model.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer'])
+            lr_sched.load_state_dict(checkpoint['lr_scheduler'])
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
         else:
@@ -231,6 +232,7 @@ def main_worker(gpu, ngpus_per_node, args):
                 'train_losses': train_losses,
                 'val_losses': val_losses,
                 'optimizer': optimizer.state_dict(),
+                'lr_scheduler': lr_sched.state_dict(),
             }
             torch.save(save_checkpoint, args.save_path)
 
@@ -242,6 +244,7 @@ def main_worker(gpu, ngpus_per_node, args):
             'train_losses': train_losses,
             'val_losses': val_losses,
             'optimizer': optimizer.state_dict(),
+            'lr_scheduler': lr_sched.state_dict(),
         }
         torch.save(save_checkpoint, "last_" + args.save_path)
 
