@@ -17,6 +17,7 @@ import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 import sklearn.metrics
+import visdom
 from efficientnet_pytorch import EfficientNet, utils
 
 import torch
@@ -36,6 +37,7 @@ import data_loader as dl
 import neural_nets
 from utils import FerPlusExpression
 from utils import DatasetType
+from utils import VisdomLinePlotter
 
 model_names = [
     'vggface',
@@ -86,6 +88,8 @@ parser.add_argument('--early-stopping', dest='early_stopping', action='store_fal
                     help='run training with early stopping enabled')
 parser.add_argument('--patience', default=20, type=int, dest='patience', metavar='patience',
                     help='patience to use for early stopping if it is enabled')
+parser.add_argument('--visdom', dest='visdom', action='store_false',
+                    help='plot training progress using visdom')
 
 
 def main():
@@ -114,6 +118,11 @@ def main_worker(gpu, ngpus_per_node, args):
 
     if args.gpu is not None:
         print("Use GPU: {} for training".format(args.gpu))
+
+    if args.visdom:
+        plotter = VisdomLinePlotter(env_name="FER Training")
+    else:
+        plotter = None
 
     # create model and get transformations
     if args.arch == 'vggface':
@@ -213,22 +222,28 @@ def main_worker(gpu, ngpus_per_node, args):
     early_stop = EarlyStopping(patience=args.patience)
     for epoch in range(start_epoch, args.epochs):
         # train for one epoch
-        loss, acc = train(train_loader, model, criterion, optimizer, epoch, args)
+        loss, train_acc = train(train_loader, model, criterion, optimizer, epoch, args)
         train_losses.append(loss)
         lr_sched.step(epoch)
 
         # evaluate on validation set
-        loss, acc = validate(val_loader, model, criterion, args)
+        loss, val_acc = validate(val_loader, model, criterion, args)
         val_losses.append(loss)
 
+        if plotter is not None:
+            plotter.plot('loss', 'train', 'Loss', epoch, train_losses[-1])
+            plotter.plot('loss', 'val', 'Loss', epoch, val_losses[-1])
+            plotter.plot('acc', 'train', 'Accuracy', epoch, train_acc)
+            plotter.plot('acc', 'val', 'Accuracy', epoch, val_acc)
+
         # remember best acc and save checkpoint
-        if acc > best_acc:
-            best_acc = acc
+        if val_acc > best_acc:
+            best_acc = val_acc
             save_checkpoint = {
                 'epoch': epoch + 1,
                 'arch': args.arch,
                 'state_dict': model.state_dict(),
-                'acc': acc,
+                'acc': val_acc,
                 'train_losses': train_losses,
                 'val_losses': val_losses,
                 'optimizer': optimizer.state_dict(),
@@ -240,7 +255,7 @@ def main_worker(gpu, ngpus_per_node, args):
             'epoch': epoch + 1,
             'arch': args.arch,
             'state_dict': model.state_dict(),
-            'acc': acc,
+            'acc': val_acc,
             'train_losses': train_losses,
             'val_losses': val_losses,
             'optimizer': optimizer.state_dict(),
@@ -249,7 +264,7 @@ def main_worker(gpu, ngpus_per_node, args):
         torch.save(save_checkpoint, "last_" + args.save_path)
 
         if args.early_stopping:
-            early_stop(acc)
+            early_stop(val_acc)
             if early_stop.early_stop:
                 print("Early Stopping detected: Ending training and saving model")
                 break
