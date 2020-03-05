@@ -17,7 +17,6 @@ import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 import sklearn.metrics
-import visdom
 from efficientnet_pytorch import EfficientNet, utils
 
 import torch

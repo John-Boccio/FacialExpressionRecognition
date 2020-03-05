@@ -63,7 +63,7 @@ class VisdomLinePlotter(object):
     """ https://github.com/noagarcia/visdom-tutorial """
     """Plots to Visdom"""
     def __init__(self, env_name='main'):
-        self.viz = Visdom()
+        self.viz = visdom.Visdom()
         self.env = env_name
         self.plots = {}
 
