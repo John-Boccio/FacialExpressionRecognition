@@ -87,7 +87,7 @@ parser.add_argument('--early-stopping', dest='early_stopping', action='store_fal
                     help='run training with early stopping enabled')
 parser.add_argument('--patience', default=20, type=int, dest='patience', metavar='patience',
                     help='patience to use for early stopping if it is enabled')
-parser.add_argument('--visdom', dest='visdom', action='store_false',
+parser.add_argument('--visdom', dest='visdom', action='store_true',
                     help='plot training progress using visdom')
 
 
