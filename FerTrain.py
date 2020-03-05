@@ -1,3 +1,13 @@
+"""
+Author(s):
+    John Boccio
+Last revision:
+    3/3/2020
+Description:
+    A large portion of this has been taken from PyTorch's ImageNet example and changed for FER
+    (https://github.com/pytorch/examples/blob/master/imagenet/main.py)
+"""
+
 import argparse
 import os
 import random
@@ -5,8 +15,9 @@ import time
 import warnings
 
 import numpy as np
-from pandas_ml import ConfusionMatrix
 import matplotlib.pyplot as plt
+# from pandas_ml import ConfusionMatrix
+from efficientnet_pytorch import EfficientNet, utils
 
 import torch
 import torch.nn as nn
@@ -23,12 +34,16 @@ import torchvision.models as models
 
 import data_loader as dl
 import neural_nets
-from utils import Expression
+from utils import FerPlusExpression
 from utils import DatasetType
 
 model_names = [
     'vggface',
-    'efficientnet-b4'
+    'efficientnet-b0',
+    'efficientnet-b1',
+    'efficientnet-b2',
+    'efficientnet-b3',
+    'efficientnet-b4',
 ]
 
 parser = argparse.ArgumentParser(description='PyTorch FER Training')
@@ -41,8 +56,6 @@ parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 parser.add_argument('--epochs', default=100, type=int, metavar='N',
                     help='number of total epochs to run')
-parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
-                    help='manual epoch number (useful on restarts)')
 parser.add_argument('-b', '--batch-size', default=32, type=int,
                     metavar='N',
                     help='mini-batch size (default: 32), this is the total '
@@ -66,9 +79,13 @@ parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
 parser.add_argument('--pretrained', dest='pretrained', action='store_true',
                     help='use pre-trained model')
 parser.add_argument('--seed', default=None, type=int,
-                    help='seed for initializing training. ')
+                    help='seed for initializing training')
 parser.add_argument('--gpu', default=None, type=int,
                     help='GPU id to use.')
+parser.add_argument('--early-stopping', dest='early_stopping', action='store_false',
+                    help='run training with early stopping enabled')
+parser.add_argument('--patience', default=20, type=int, dest='patience', metavar='patience',
+                    help='patience to use for early stopping if it is enabled')
 
 
 def main():
@@ -111,18 +128,19 @@ def main_worker(gpu, ngpus_per_node, args):
         if args.evaluate is not True:
             warnings.warn("Cannot train vggface, changing settings to evaluation mode")
             args.evaluate = True
-    elif args.arch == 'efficientnet-b4':
-        model = neural_nets.FerEfficientNet()
+    elif args.arch.startswith("efficientnet"):
+        model = EfficientNet.from_pretrained(args.arch, in_channels=1, num_classes=len(FerPlusExpression))
+        res = utils.efficientnet_params(args.arch)[2]
         train_transform = transforms.Compose(
-            [transforms.Resize(600),
+            [transforms.Resize(res),
              transforms.RandomHorizontalFlip(),
              transforms.ToTensor(),
-             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
+             transforms.Normalize([0.449], [0.226])]
         )
         val_transform = transforms.Compose(
-            [transforms.Resize(600),
+            [transforms.Resize(res),
              transforms.ToTensor(),
-             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
+             transforms.Normalize([0.449], [0.226])]
         )
     else:
         warnings.warn("Invalid architecture selected: ", args.arch)
@@ -138,14 +156,15 @@ def main_worker(gpu, ngpus_per_node, args):
             # DataParallel will divide and allocate batch_size to all available GPUs
             model = torch.nn.DataParallel(model).cuda()
 
-    # define loss function (criterion) and optimizer
+    # define loss function (criterion), optimizer, and learning rate scheduler
     criterion = nn.CrossEntropyLoss().cuda(args.gpu)
-
-    optimizer = torch.optim.SGD(model.parameters(), args.lr,
-                                momentum=args.momentum,
-                                weight_decay=args.weight_decay)
+    optimizer = torch.optim.RMSprop(model.parameters(), args.lr,
+                                    momentum=args.momentum,
+                                    weight_decay=args.weight_decay)
+    lr_sched = torch.optim.lr_scheduler.StepLR(optimizer, 30, gamma=.1)
 
     best_acc = 0
+    start_epoch = 0
     train_losses = []
     val_losses = []
     # optionally resume from a checkpoint
@@ -158,8 +177,8 @@ def main_worker(gpu, ngpus_per_node, args):
                 # Map model to be loaded to specified single gpu.
                 loc = 'cuda:{}'.format(args.gpu)
                 checkpoint = torch.load(args.resume, map_location=loc)
-            args.start_epoch = checkpoint['epoch']
-            best_acc = checkpoint['best_acc']
+            start_epoch = checkpoint['epoch']
+            best_acc = checkpoint['acc']
             train_losses = checkpoint['train_losses']
             val_losses = checkpoint['val_losses']
             if args.gpu is not None:
@@ -190,13 +209,14 @@ def main_worker(gpu, ngpus_per_node, args):
         validate(val_loader, model, criterion, args, conf_mat=True)
         return
 
-    early_stop = EarlyStopping()
-    for epoch in range(args.start_epoch, args.epochs):
+    early_stop = EarlyStopping(patience=args.patience)
+    for epoch in range(start_epoch, args.epochs):
         adjust_learning_rate(optimizer, epoch, args)
 
         # train for one epoch
         loss, acc = train(train_loader, model, criterion, optimizer, epoch, args)
         train_losses.append(loss)
+        lr_sched.step(epoch)
 
         # evaluate on validation set
         loss, acc = validate(val_loader, model, criterion, args)
@@ -209,17 +229,29 @@ def main_worker(gpu, ngpus_per_node, args):
                 'epoch': epoch + 1,
                 'arch': args.arch,
                 'state_dict': model.state_dict(),
-                'best_acc': best_acc,
+                'acc': acc,
                 'train_losses': train_losses,
                 'val_losses': val_losses,
                 'optimizer': optimizer.state_dict(),
             }
             torch.save(save_checkpoint, args.save_path)
 
-        early_stop(acc)
-        if early_stop.early_stop:
-            print("Early Stopping detected, training ended")
-            break
+        save_checkpoint = {
+            'epoch': epoch + 1,
+            'arch': args.arch,
+            'state_dict': model.state_dict(),
+            'acc': acc,
+            'train_losses': train_losses,
+            'val_losses': val_losses,
+            'optimizer': optimizer.state_dict(),
+        }
+        torch.save(save_checkpoint, "last_" + args.save_path)
+
+        if args.early_stopping:
+            early_stop(acc)
+            if early_stop.early_stop:
+                print("Early Stopping detected: Ending training and saving model")
+                break
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
@@ -280,7 +312,7 @@ def validate(val_loader, model, criterion, args, conf_mat=False):
         [batch_time, losses, acc],
         prefix='Test: ')
     if conf_mat:
-        mat = ConfusionMat()
+        mat = None # ConfusionMat()
     else:
         mat = None
 
@@ -313,8 +345,8 @@ def validate(val_loader, model, criterion, args, conf_mat=False):
 
             if mat is not None:
                 _, predicted = torch.max(output.data, 1)
-                a = [Expression(i).name for i in target.tolist()]
-                p = [Expression(i).name for i in predicted.tolist()]
+                a = [FerPlusExpression(i).name for i in target.tolist()]
+                p = [FerPlusExpression(i).name for i in predicted.tolist()]
                 mat.update(a, p, extend=True)
 
             if i % args.print_freq == 0:
@@ -367,6 +399,7 @@ class ProgressMeter(object):
         return '[' + fmt + '/' + fmt.format(num_batches) + ']'
 
 
+"""
 class ConfusionMat(object):
     def __init__(self):
         self.actual = []
@@ -388,6 +421,7 @@ class ConfusionMat(object):
         else:
             self.actual.append(actual)
             self.pred.append(pred)
+"""
 
 
 class EarlyStopping:

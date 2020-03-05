@@ -14,7 +14,7 @@ Description:
 from torch.utils.data import Dataset
 from skimage import io
 from utils import DatasetType
-from utils import Expression
+from utils import FerExpression
 import ConfigParser as Cp
 import os
 import pickle
@@ -123,18 +123,18 @@ class CKDataset(Dataset):
     @staticmethod
     def ck_to_expression(expression):
         if expression == 0:
-            return Expression.NEUTRAL.value
+            return FerExpression.NEUTRAL.value
         elif expression == 1:
-            return Expression.ANGRY.value
+            return FerExpression.ANGRY.value
         elif expression == 3:
-            return Expression.DISGUST.value
+            return FerExpression.DISGUST.value
         elif expression == 4:
-            return Expression.FEAR.value
+            return FerExpression.FEAR.value
         elif expression == 5:
-            return Expression.HAPPY.value
+            return FerExpression.HAPPY.value
         elif expression == 6:
-            return Expression.SAD.value
+            return FerExpression.SAD.value
         elif expression == 7:
-            return Expression.SURPRISE.value
+            return FerExpression.SURPRISE.value
         return None
 

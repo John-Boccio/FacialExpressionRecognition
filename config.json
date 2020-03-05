@@ -8,6 +8,9 @@
     "FER2013": {
       "csv_path": "/Users/johnboccio/Datasets/fer2013/fer2013.csv"
     },
+    "FERplus": {
+      "csv_path": "/Users/johnboccio/Datasets/fer2013/fer2013new.csv"
+    },
     "expW": {
       "image_dir": "/Users/johnboccio/Datasets/ExpW/data/image/",
       "label_path": "/Users/johnboccio/Datasets/ExpW/data/label/label.lst"
