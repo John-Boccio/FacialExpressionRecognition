@@ -166,9 +166,9 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # define loss function (criterion), optimizer, and learning rate scheduler
     criterion = nn.CrossEntropyLoss().cuda(args.gpu)
-    optimizer = torch.optim.RMSprop(model.parameters(), args.lr,
-                                    momentum=args.momentum,
-                                    weight_decay=args.weight_decay)
+    optimizer = torch.optim.SGD(model.parameters(), args.lr,
+                                momentum=args.momentum,
+                                weight_decay=args.weight_decay)
     lr_sched = torch.optim.lr_scheduler.StepLR(optimizer, 30, gamma=.1)
 
     best_acc = 0
@@ -203,8 +203,9 @@ def main_worker(gpu, ngpus_per_node, args):
     cudnn.benchmark = True
 
     # Data loading code
-    train_set = dl.FER2013Dataset(set_type=DatasetType.TRAIN, tf=train_transform)
-    val_set = dl.FER2013Dataset(set_type=DatasetType.VALIDATION, tf=val_transform)
+    train_set = dl.FER2013Dataset(ferplus=True, facecrop=True, set_type=DatasetType.TRAIN, tf=train_transform)
+    print(len(train_set))
+    val_set = dl.FER2013Dataset(ferplus=True, facecrop=True, set_type=DatasetType.VALIDATION, tf=val_transform)
 
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=args.batch_size, shuffle=True,
