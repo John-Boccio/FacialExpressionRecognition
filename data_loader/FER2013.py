@@ -74,10 +74,6 @@ class FER2013Dataset(Dataset):
                         continue
                     pixels = cv2.cvtColor(faces[0]['img'], cv2.COLOR_RGB2GRAY)
 
-                pixels = Image.fromarray(pixels)
-                if tf:
-                    pixels = tf(pixels)
-
                 # Create data point
                 data_point = {
                     "img": pixels,
@@ -96,4 +92,10 @@ class FER2013Dataset(Dataset):
     def __getitem__(self, item):
         if torch.is_tensor(item):
             item = item.tolist()
-        return self.dataset[item]
+
+        # Deep copies so the user can't mess with the dataset
+        sample = self.dataset[item].copy()
+        sample['img'] = Image.fromarray(sample['img'])
+        if self.transform:
+            sample['img'] = self.transform(sample['img'])
+        return sample
