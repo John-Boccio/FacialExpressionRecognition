@@ -45,6 +45,9 @@ model_names = [
     'efficientnet-b2',
     'efficientnet-b3',
     'efficientnet-b4',
+    'efficientnet-b5',
+    'efficientnet-b6',
+    'efficientnet-b7',
 ]
 
 parser = argparse.ArgumentParser(description='PyTorch FER Training')
@@ -203,9 +206,8 @@ def main_worker(gpu, ngpus_per_node, args):
     cudnn.benchmark = True
 
     # Data loading code
-    train_set = dl.FER2013Dataset(ferplus=True, facecrop=True, set_type=DatasetType.TRAIN, tf=train_transform)
-    print(len(train_set))
-    val_set = dl.FER2013Dataset(ferplus=True, facecrop=True, set_type=DatasetType.VALIDATION, tf=val_transform)
+    train_set = dl.FER2013Dataset(ferplus=True, set_type=DatasetType.TRAIN, tf=train_transform)
+    val_set = dl.FER2013Dataset(ferplus=True, set_type=DatasetType.VALIDATION, tf=val_transform)
 
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=args.batch_size, shuffle=True,
