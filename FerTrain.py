@@ -293,8 +293,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         data_time.update(time.time() - end)
 
         if torch.cuda.is_available():
-            if args.gpu is not None:
-                images = images.cuda(args.gpu, non_blocking=True)
+            # if args.gpu is not None:
+            images = images.cuda(args.gpu, non_blocking=True)
             target = target.cuda(args.gpu, non_blocking=True)
 
         # compute output
@@ -344,8 +344,8 @@ def validate(val_loader, model, criterion, args, conf_mat=False):
             target = sample['expression']
 
             if torch.cuda.is_available():
-                if args.gpu is not None:
-                    images = images.cuda(args.gpu, non_blocking=True)
+                # if args.gpu is not None:
+                images = images.cuda(args.gpu, non_blocking=True)
                 target = target.cuda(args.gpu, non_blocking=True)
 
             # compute output
