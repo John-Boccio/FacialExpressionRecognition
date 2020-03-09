@@ -44,6 +44,8 @@ class FER2013Dataset(Dataset):
 
             csv_reader = csv.reader(csv_file, delimiter=',')
             for i, entry in enumerate(csv_reader):
+                plus_entry = next(ferplus_reader)
+
                 if self.set_type == DatasetType.TRAIN and entry[2] != "Training":
                     continue
                 elif self.set_type == DatasetType.VALIDATION and entry[2] != "PublicTest":
@@ -54,7 +56,6 @@ class FER2013Dataset(Dataset):
                 if not ferplus:
                     exp = int(entry[0])
                 else:
-                    plus_entry = next(ferplus_reader)
                     exp_distribution = [int(e) for e in plus_entry[2:]]
                     exp = np.argmax(exp_distribution)
                     if exp == 9:    # Not labeled identifier
