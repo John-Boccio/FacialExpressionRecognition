@@ -423,10 +423,11 @@ class ConfusionMat(object):
         self.pred = []
 
     def save(self):
-        mat = sklearn.metrics.confusion_matrix(self.actual, self.pred)
+        mat = sklearn.metrics.confusion_matrix(self.actual, self.pred, normalize='true')
         display = sklearn.metrics.ConfusionMatrixDisplay(confusion_matrix=mat,
-                                                         display_labels=[n for n, _ in vars(FerPlusExpression).items()])
-        display = display.plot()
+                                                         display_labels=[exp.name for exp in FerPlusExpression])
+
+        display = display.plot(xticks_rotation='vertical', values_format='.2f', cmap=plt.get_cmap('Blues'))
         plt.savefig("conf_mat.png")
 
     def update(self, actual, pred, extend=False):
