@@ -1,8 +1,8 @@
+# File to capture images from Camera and send to Flask server
 # import the necessary packages
 from OpenCVvideostream.motion_detection.singlemotiondetector import SingleMotionDetector
 from imutils.video import VideoStream
 from flask import Response
-from flask import Flask
 from flask import render_template
 import threading
 import argparse
@@ -17,8 +17,6 @@ import cv2
 outputFrame = None
 lock = threading.Lock()
 
-# initialize a flask object
-app = Flask(__name__)
 
 # initialize the video stream and allow the camera sensor to
 # warmup
@@ -31,6 +29,7 @@ time.sleep(2.0)
 def index():
     # return the rendered template
     return render_template("index.html")
+
 
 def detect_faces():
     # grab global references to the video stream, output frame, and
@@ -150,10 +149,6 @@ if __name__ == '__main__':
         args["frame_count"],))
     t.daemon = True
     t.start()
-
-    # start the flask app
-    app.run(host=args["ip"], port=args["port"], debug=True,
-            threaded=True, use_reloader=False)
 
 # release the video stream pointer
 vs.stop()
