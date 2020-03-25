@@ -1,11 +1,7 @@
-from imutils.video import VideoStream
 from flask import Flask, Response, render_template, request
 import threading
 import json
-import datetime
-import imutils
 import cv2
-import base64
 import numpy as np
 
 # initialize the output frame and a lock used to ensure thread-safe
@@ -20,31 +16,6 @@ app = Flask(__name__)
 def index():
     # return the rendered template
     return render_template("index.html")
-
-"""
-def capture_frames():
-    # grab global references to the video stream, output frame, and
-    # lock variables
-    global outputFrame, video_lock, video
-
-    # loop over frames from the video stream
-    while True:
-        # read the next frame from the video stream, resize it,
-        # convert the frame to grayscale, and blur it
-        frame = video.read()
-        frame = imutils.resize(frame, width=400)
-
-        # grab the current timestamp and draw it on the frame
-        timestamp = datetime.datetime.now()
-        cv2.putText(frame, timestamp.strftime(
-            "%A %d %B %Y %I:%M:%S%p"), (10, frame.shape[0] - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
-
-        # acquire the lock, set the output frame, and release the
-        # lock
-        with video_lock:
-            outputFrame = frame.copy()
-"""
 
 
 def generate():
@@ -86,6 +57,8 @@ def video_feed():
             image = request.get_data()
         response = json.dumps({'message': 'image received'})
         return Response(response=response, status=200, mimetype="application/json")
+    response = json.dumps({'message': 'invalid usage'})
+    return Response(response=response, status=400, mimetype="application/json")
 
 
 # check to see if this is the main thread of execution

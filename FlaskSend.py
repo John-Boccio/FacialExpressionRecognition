@@ -2,9 +2,11 @@ import argparse
 import cv2
 import datetime
 import requests
+import imutils
 import time
 
 from imutils.video import VideoStream
+from image_processing import histogram_equalization, crop_face_transform
 
 
 def send_frames(video, fps=10, frames_to_send=-1):
@@ -16,6 +18,8 @@ def send_frames(video, fps=10, frames_to_send=-1):
     while frames_sent < frames_to_send or send_forever:
         st_time = time_ms()
         frame = video.read()
+        frame = crop_face_transform(frame)
+        frame = cv2.resize(frame, dsize=(1080, 720))
 
         # grab the current timestamp and draw it on the frame
         timestamp = datetime.datetime.now()
