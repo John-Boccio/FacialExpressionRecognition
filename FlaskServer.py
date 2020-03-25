@@ -3,6 +3,11 @@ import threading
 import json
 import cv2
 import numpy as np
+import torch
+import utils
+
+import neural_nets
+import torchvision.transforms as transforms
 
 # initialize the output frame and a lock used to ensure thread-safe
 # exchanges of the output frames (useful for multiple browsers/tabs
@@ -11,6 +16,14 @@ image = None
 image_lock = threading.Lock()
 app = Flask(__name__)
 
+model = neural_nets.VggVdFaceFerDag()
+model.eval()
+vgg_transform = transforms.Compose([transforms.Resize(model.meta["imageSize"][0]),
+                transforms.ToTensor(),
+                lambda x: x * 255,
+                transforms.Normalize(mean=model.meta["mean"], std=model.meta["std"])])
+if torch.cuda.is_available():
+    model = torch.nn.DataParallel(model).cuda()
 
 @app.route("/", methods=['GET'])
 def index():
@@ -37,6 +50,10 @@ def generate():
 
         # decode image
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        nn_prediction = model.forward(vgg_transform(img.unsqueeze(0)))
+        _, predicted = torch.max(nn_prediction.data, 1)
+        expression = utils.FerExpression(predicted.item())
+        img = cv2.putText(img, str(expression), (0, 0), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
         flag, img = cv2.imencode(".jpg", img)
         if not flag:
             continue
