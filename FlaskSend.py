@@ -9,7 +9,7 @@ from imutils.video import VideoStream
 from image_processing import histogram_equalization, crop_face_transform
 
 
-def send_frames(video, fps=10, frames_to_send=-1):
+def send_frames(video, addr, fps=10, frames_to_send=-1):
     mspf = (1/fps)*1000
     time_ms = lambda: int(round(time.time()*1000))
     send_forever = (frames_to_send == -1)
@@ -32,7 +32,7 @@ def send_frames(video, fps=10, frames_to_send=-1):
             continue
 
         headers = {'content-type': 'image/jpeg'}
-        requests.post("http://localhost:5000/video_feed", data=encodedImage.tostring(), headers=headers)
+        requests.post(addr, data=encodedImage.tostring(), headers=headers)
         frames_sent += 1
 
         if frames_sent % fps == 0:
@@ -55,5 +55,5 @@ if __name__ == "__main__":
                         help='FPS to capture images at (default: 15)')
     args = parser.parse_args()
     video = VideoStream(src=0).start()
-    send_frames(video, fps=args.fps, frames_to_send=args.frames)
+    send_frames(video, addr=args.address, fps=args.fps, frames_to_send=args.frames)
 
