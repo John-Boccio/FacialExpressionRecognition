@@ -19,7 +19,7 @@ def send_frames(video, addr, fps=10, frames_to_send=-1):
         st_time = time_ms()
         frame = video.read()
         frame = crop_face_transform(frame)
-        frame = cv2.resize(frame, dsize=(1080, 720))
+        frame = cv2.resize(frame, dsize=(360, 240))
 
         # grab the current timestamp and draw it on the frame
         timestamp = datetime.datetime.now()
