@@ -1,25 +1,27 @@
 from imutils.video import VideoStream
-from flask import Flask, Response, render_template
+from flask import Flask, Response, render_template, request
 import threading
+import json
 import datetime
 import imutils
 import cv2
+import base64
+import numpy as np
 
 # initialize the output frame and a lock used to ensure thread-safe
 # exchanges of the output frames (useful for multiple browsers/tabs
 # are viewing the stream)
-outputFrame = None
-video_lock = threading.Lock()
-video = VideoStream(src=0).start()
+image = None
+image_lock = threading.Lock()
 app = Flask(__name__)
 
 
-@app.route("/")
+@app.route("/", methods=['GET'])
 def index():
     # return the rendered template
     return render_template("index.html")
 
-
+"""
 def capture_frames():
     # grab global references to the video stream, output frame, and
     # lock variables
@@ -42,49 +44,51 @@ def capture_frames():
         # lock
         with video_lock:
             outputFrame = frame.copy()
+"""
 
 
 def generate():
     # grab global references to the output frame and lock variables
-    global outputFrame, video_lock
+    global image, image_lock
 
     # loop over frames from the output stream
     while True:
         # wait until the lock is acquired
-        with video_lock:
+        with image_lock:
             # check if the output frame is available, otherwise skip
             # the iteration of the loop
-            if outputFrame is None:
+            if image is None:
                 continue
 
-            # encode the frame in JPEG format
-            (flag, encodedImage) = cv2.imencode(".jpg", outputFrame)
+            # convert string of image data to uint8
+            nparr = np.fromstring(image, np.uint8)
+            image = None
 
-            # ensure the frame was successfully encoded
-            if not flag:
-                continue
+        # decode image
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        flag, img = cv2.imencode(".jpg", img)
+        if not flag:
+            continue
 
         # yield the output frame in the byte format
         yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
-               bytearray(encodedImage) + b'\r\n')
+               bytearray(img) + b'\r\n')
 
 
-@app.route("/video_feed")
+@app.route("/video_feed", methods=['GET', 'POST'])
 def video_feed():
-    # return the response generated along with the specific media type (mime type)
-    return Response(generate(),
-                    mimetype="multipart/x-mixed-replace; boundary=frame")
+    global image, image_lock
+    if request.method == 'GET':
+        return Response(generate(),
+                        mimetype="multipart/x-mixed-replace; boundary=frame")
+    elif request.method == 'POST':
+        with image_lock:
+            image = request.get_data()
+        response = json.dumps({'message': 'image received'})
+        return Response(response=response, status=200, mimetype="application/json")
 
 
 # check to see if this is the main thread of execution
 if __name__ == '__main__':
-    # start a thread that will perform motion detection
-    t = threading.Thread(target=capture_frames)
-    t.daemon = True
-    t.start()
-
     app.run()
 
-
-# release the video stream pointer
-video.stop()
