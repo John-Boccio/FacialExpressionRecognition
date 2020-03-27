@@ -1,9 +1,83 @@
 <html>
   <head>
+    <style>
+    * {
+      box-sizing: border-box;
+    }
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+           }
+        /* Style the header */
+  .header {
+    grid-area: header;
+    background-color: #f1f1f1;
+    padding: 30px;
+    text-align: center;
+    font-size: 35px;
+  }
+
+  /* The grid container */
+  .grid-container {
+    display: grid;
+    grid-template-areas: 
+      'header header header header header header' 
+      'left middle middle middle middle right' 
+      'footer footer footer footer footer footer';
+    /* grid-column-gap: 10px; - if you want gap between the columns */
+  } 
+
+  .left,
+  .middle,
+  .right {
+    padding: 10px;
+    height: 300px; /* Should be removed. Only for demonstration */
+  }
+
+  /* Style the left column */
+  .left {
+    grid-area: left;
+  }
+
+  /* Style the middle column */
+  .middle {
+    grid-area: middle;
+  }
+
+  /* Style the right column */
+  .right {
+    grid-area: right;
+  }
+
+  /* Style the footer */
+  .footer {
+    grid-area: footer;
+    background-color: #f1f1f1;
+    padding: 10px;
+    text-align: center;
+  }
+
+  /* Responsive layout - makes the three columns stack on top of each other instead of next to each other */
+  @media (max-width: 600px) {
+    .grid-container  {
+      grid-template-areas: 
+        'header header header header header header' 
+        'left left left left left left' 
+        'middle middle middle middle middle middle' 
+        'right right right right right right' 
+        'footer footer footer footer footer footer';
+    }
+  }
+  </style>
     <title>Oizys Facial Expression Recognition System</title>
   </head>
   <body>
-    <h1>Oizys Facial Expression Recognition System</h1>
-    <img src="{{ url_for('video_feed') }}">
+    <h1><strong>Oizys Facial Expression Recognition System</strong></h1>
+    <p>Facial expression recognition aims to extract additional information out of images of humans. The expressions used often consist of the following: happy, sad, fear, disgust, neutral, angry, surprise. Finding these expressions is a very difficult and non-trivial task which has led to the use of convolutional neural networks. By using large, labeled datasets, these neural networks can be trained to predict the expressions shown on a face.</p> 
+<p>With a working facial expression recognition algorithm, we will then apply it to our own internet of things device using a jetson nano and a camera. The goal of this device is that you could place it anywhere a user would like to gather data on the facial expressions of people walking by the camera. This could be used in front of advertisement signs, during interviews, or to observe movie watchers. In order to enable this kind of functionality, the device will connect to a server where various statistics of the expressions seen can be stored and later analyzed.</p>
+    <div class="middle"<img src="{{ url_for('video_feed') }}"></div>
+   <div class="footer">
+    <p>Stony Brook University ESE 441 Senior Design Project: Facial Expression Recognition System. Oizys-John Boccio, Muhammad Hussain, Yi-Cheng Cheng.Faculty Advisor: Peter Milder
+</p>
+  </div>
   </body>
 </html>
