@@ -50,10 +50,6 @@ def generate():
 
         # decode image
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        #nn_prediction = model.forward(vgg_transform(img.unsqueeze(0)))
-        #_, predicted = torch.max(nn_prediction.data, 1)
-        #expression = utils.FerExpression(predicted.item())
-        #img = cv2.putText(img, str(expression), (0, 0), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
         flag, img = cv2.imencode(".jpg", img)
         if not flag:
             continue
