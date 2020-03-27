@@ -6,14 +6,20 @@
     }
       body {
         font-family: Arial, Helvetica, sans-serif;
+        background-color:#D3D3D3;
            }
         /* Style the header */
+  .heading {
+    padding: 5px;
+    /*border:2px solid Violet;*/
+  }
   .header {
     grid-area: header;
-    background-color: #f1f1f1;
-    padding: 30px;
+    /*background-color: #f1f1f1;*/
+    padding: 5px;
     text-align: center;
     font-size: 35px;
+    height: 110px;
   }
 
   /* The grid container */
@@ -21,16 +27,16 @@
     display: grid;
     grid-template-areas: 
       'header header header header header header' 
-      'left middle middle middle middle right' 
+      'middle middle middle middle middle middle' /* left and right columns taken out */
       'footer footer footer footer footer footer';
-    /* grid-column-gap: 10px; - if you want gap between the columns */
+    /* grid-column-gap: 10px; - gap between the columns */
   } 
 
   .left,
   .middle,
   .right {
     padding: 10px;
-    height: 300px; /* Should be removed. Only for demonstration */
+    height: 300px;
   }
 
   /* Style the left column */
@@ -52,8 +58,9 @@
   .footer {
     grid-area: footer;
     background-color: #f1f1f1;
-    padding: 10px;
+    padding: 5px;
     text-align: center;
+    height: 110px;
   }
 
   /* Responsive layout - makes the three columns stack on top of each other instead of next to each other */
@@ -71,13 +78,15 @@
     <title>Oizys Facial Expression Recognition System</title>
   </head>
   <body>
-    <h1><strong>Oizys Facial Expression Recognition System</strong></h1>
-    <p>Facial expression recognition aims to extract additional information out of images of humans. The expressions used often consist of the following: happy, sad, fear, disgust, neutral, angry, surprise. Finding these expressions is a very difficult and non-trivial task which has led to the use of convolutional neural networks. By using large, labeled datasets, these neural networks can be trained to predict the expressions shown on a face.</p> 
-<p>With a working facial expression recognition algorithm, we will then apply it to our own internet of things device using a jetson nano and a camera. The goal of this device is that you could place it anywhere a user would like to gather data on the facial expressions of people walking by the camera. This could be used in front of advertisement signs, during interviews, or to observe movie watchers. In order to enable this kind of functionality, the device will connect to a server where various statistics of the expressions seen can be stored and later analyzed.</p>
+    <h1 style="color:#ff6347;"><strong>Oizys Facial Expression Recognition System</strong></h1>
+    <div class='heading'><p>Facial expression recognition aims to extract additional information out of images of humans. The expressions used often consist of the following: happy, sad, fear, disgust, neutral, angry, surprise. Finding these expressions is a very difficult and non-trivial task which has led to the use of convolutional neural networks. By using large, labeled datasets, these neural networks can be trained to predict the expressions shown on a face.<br>
+      <br> With a working facial expression recognition algorithm, we will then apply it to our own internet of things device using a jetson nano and a camera. The goal of this device is that you could place it anywhere a user would like to gather data on the facial expressions of people walking by the camera. This could be used in front of advertisement signs, during interviews, or to observe movie watchers. In order to enable this kind of functionality, the device will connect to a server where various statistics of the expressions seen can be stored and later analyzed.</p></style></div>
+    <div class="header"><img src="Oizys.jpg" alt="Oizys logo" align="center" style="width:100px;height:100px;"></div>
     <div class="middle"<img src="{{ url_for('video_feed') }}"></div>
    <div class="footer">
-    <p>Stony Brook University ESE 441 Senior Design Project: Facial Expression Recognition System. Oizys-John Boccio, Muhammad Hussain, Yi-Cheng Cheng.Faculty Advisor: Peter Milder
-</p>
+       <img src="StonyBrook.jpg" alt="Stony Brook University" align="left" style="width:100px;height:100px;">
+       <p>Stony Brook University ESE 441 Senior Design Project: Facial Expression Recognition System.</p>
+       <p>Oizys-John Boccio, Muhammad Hussain, Yi-Cheng Cheng. Faculty Advisor: Peter Milder</p>
   </div>
   </body>
 </html>
