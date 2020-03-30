@@ -1,4 +1,5 @@
 from flask import Flask, Response, render_template, request
+import argparse
 import threading
 import json
 import cv2
@@ -76,5 +77,10 @@ def video_feed():
 
 # check to see if this is the main thread of execution
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", debug=True)
+    parser = argparse.ArgumentParser(description='Host server to receive images')
+    parser.add_argument('--host', dest='host', default=None, help="Web address to host the server")
+    parser.add_argument('--port', dest='port', default=None, help="Port to host the server")
+    parser.add_argument('--debug', dest='debug', action='store_true', help='Set server to debug mode')
+    args = parser.parse_args()
+    app.run(host=args.host, port=args.port, debug=args.debug)
 
