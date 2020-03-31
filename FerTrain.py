@@ -37,6 +37,7 @@ import neural_nets
 from utils import FerPlusExpression, FerExpression
 from utils import DatasetType
 from utils import VisdomLinePlotter
+from image_processing import histogram_equalization
 
 model_names = [
     'vggface',
@@ -102,6 +103,11 @@ parser.add_argument('--patience', default=20, type=int, dest='patience', metavar
 parser.add_argument('--visdom', dest='visdom', action='store_true',
                     help='plot training progress using visdom')
 
+from utils import show_distribution
+
+test_set = dl.FER2013Dataset(ferplus=False, set_type=DatasetType.TEST, tf=None)
+show_distribution(test_set, "FER2013 Test Set Distribution", ferplus=False)
+
 
 def main():
     args = parser.parse_args()
@@ -150,6 +156,7 @@ def main_worker(gpu, ngpus_per_node, args):
         val_transform = transforms.Compose(
                 [transforms.Lambda(lambda x: x.convert('RGB')),
                 transforms.Resize(model.meta["imageSize"][0]),
+                transforms.Lambda(lambda x: histogram_equalization(np.array(x))),
                 transforms.ToTensor(),
                 transforms.Lambda(lambda x: x * 255),
                 transforms.Normalize(mean=model.meta["mean"], std=model.meta["std"])])
@@ -460,6 +467,7 @@ class ConfusionMat(object):
         display = ConfusionMatrixDisplay(confusion_matrix=mat, display_labels=[exp.name for exp in FerPlusExpression])
 
         display = display.plot(xticks_rotation='vertical', values_format='.2f', cmap=plt.get_cmap('Blues'))
+        plt.tight_layout()
         plt.savefig("conf_mat.png")
 
     def update(self, actual, pred, extend=False):

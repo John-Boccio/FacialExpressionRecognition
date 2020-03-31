@@ -57,7 +57,8 @@ def show_distribution(dataset, title="", ferplus=False):
     plt.xticks(np.arange(len(exp)), exp, rotation=90)
     plt.xlabel("Expression")
     plt.ylabel("Frequency (total count {})".format(len(dataset)))
-    plt.show()
+    plt.tight_layout()
+    plt.savefig(title + ".png")
 
 
 class VisdomLinePlotter(object):
