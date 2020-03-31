@@ -16,7 +16,7 @@ import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
-import sklearn.metrics
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from efficientnet_pytorch import EfficientNet, utils
 
 import torch
@@ -456,9 +456,8 @@ class ConfusionMat(object):
         self.pred = []
 
     def save(self):
-        mat = sklearn.metrics.confusion_matrix(self.actual, self.pred, normalize='true')
-        display = sklearn.metrics.ConfusionMatrixDisplay(confusion_matrix=mat,
-                                                         display_labels=[exp.name for exp in FerPlusExpression])
+        mat = confusion_matrix(self.actual, self.pred, normalize='true')
+        display = ConfusionMatrixDisplay(confusion_matrix=mat, display_labels=[exp.name for exp in FerPlusExpression])
 
         display = display.plot(xticks_rotation='vertical', values_format='.2f', cmap=plt.get_cmap('Blues'))
         plt.savefig("conf_mat.png")
