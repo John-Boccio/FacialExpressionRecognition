@@ -10,6 +10,7 @@ Description:
 from enum import Enum
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 import visdom
 
 
@@ -97,3 +98,9 @@ def graph_losses(train_losses, val_losses, save_path="losses.png"):
     plt.legend()
     plt.tight_layout()
     plt.savefig(save_path, bbox_inches='tight')
+
+def get_expression(model, img, exp_class=FerExpression):
+    nn_prediction = model.forward(img.unsqueeze(0))
+    _, predicted = torch.max(nn_prediction.data, 1)
+    expression = exp_class(predicted.item())
+    return expression.name

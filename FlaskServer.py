@@ -1,4 +1,5 @@
 from flask import Flask, Response, render_template, request
+from PIL import Image
 import argparse
 import threading
 import json
@@ -19,7 +20,8 @@ app = Flask(__name__)
 
 model = neural_nets.VggVdFaceFerDag()
 model.eval()
-vgg_transform = transforms.Compose([transforms.Resize(model.meta["imageSize"][0]),
+vgg_transform = transforms.Compose(
+                [transforms.Resize((model.meta["imageSize"][0], model.meta["imageSize"][1])),
                 transforms.ToTensor(),
                 lambda x: x * 255,
                 transforms.Normalize(mean=model.meta["mean"], std=model.meta["std"])])
@@ -51,6 +53,10 @@ def generate():
 
         # decode image
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        pil_img = Image.fromarray(img)
+        t_img = vgg_transform(pil_img)
+        expression = utils.get_expression(model, t_img)
+        print(expression)
         flag, img = cv2.imencode(".jpg", img)
         if not flag:
             continue

@@ -34,7 +34,7 @@ import torchvision.models as models
 
 import data_loader as dl
 import neural_nets
-from utils import FerPlusExpression
+from utils import FerPlusExpression, FerExpression
 from utils import DatasetType
 from utils import VisdomLinePlotter
 
@@ -49,6 +49,10 @@ model_names = [
     'efficientnet-b6',
     'efficientnet-b7',
 ]
+dataset_names = [
+    "fer2013",
+    "fer2013plus",
+]
 
 parser = argparse.ArgumentParser(description='PyTorch FER Training')
 parser.add_argument('-a', '--arch', dest='arch', metavar='ARCH', default='vggface',
@@ -56,6 +60,11 @@ parser.add_argument('-a', '--arch', dest='arch', metavar='ARCH', default='vggfac
                     help='model architecture: ' +
                         ' | '.join(model_names) +
                         ' (default: vggface)')
+parser.add_argument('--dataset', dest='dataset', metavar='DATA', default='fer2013',
+                    choices=dataset_names,
+                    help='datasets: ' +
+                         ' | '.join(model_names) +
+                         ' (default: fer2013)')
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 parser.add_argument('--epochs', default=100, type=int, metavar='N',
@@ -126,21 +135,32 @@ def main_worker(gpu, ngpus_per_node, args):
     else:
         plotter = None
 
+    if args.dataset == "fer2013":
+        num_classes = len(FerExpression)
+    elif args.dataset == "fer2013plus":
+        num_classes = len(FerPlusExpression)
+    else:
+        warnings.warn(f"Invalid dataset choice: {args.dataset}")
+        return
+
     # create model and get transformations
     if args.arch == 'vggface':
         model = neural_nets.VggVdFaceFerDag()
         train_transform = None
         val_transform = transforms.Compose(
-            [  # image_processing.crop_face_transform,
+                [transforms.Lambda(lambda x: x.convert('RGB')),
                 transforms.Resize(model.meta["imageSize"][0]),
                 transforms.ToTensor(),
-                lambda x: x * 255,
+                transforms.Lambda(lambda x: x * 255),
                 transforms.Normalize(mean=model.meta["mean"], std=model.meta["std"])])
         if args.evaluate is not True:
-            warnings.warn("Cannot train vggface, changing settings to evaluation mode")
-            args.evaluate = True
+            warnings.warn("Cannot train vggface, set mode to evaluation mode")
+            return
+        if args.dataset != "fer2013":
+            warnings.warn("VGGFace is only compatible with FER2013, select FER2013 as the dataset")
+            return
     elif args.arch.startswith("efficientnet"):
-        model = EfficientNet.from_pretrained(args.arch, in_channels=1, num_classes=len(FerPlusExpression))
+        model = EfficientNet.from_pretrained(args.arch, in_channels=1, num_classes=num_classes)
         res = utils.efficientnet_params(args.arch)[2]
         train_transform = transforms.Compose(
             [transforms.Resize(res),
@@ -206,8 +226,17 @@ def main_worker(gpu, ngpus_per_node, args):
     cudnn.benchmark = True
 
     # Data loading code
-    train_set = dl.FER2013Dataset(ferplus=True, set_type=DatasetType.TRAIN, tf=train_transform)
-    val_set = dl.FER2013Dataset(ferplus=True, set_type=DatasetType.VALIDATION, tf=val_transform)
+    if args.dataset == "fer2013":
+        train_set = dl.FER2013Dataset(ferplus=False, set_type=DatasetType.TRAIN, tf=train_transform)
+        val_set = dl.FER2013Dataset(ferplus=False, set_type=DatasetType.VALIDATION, tf=val_transform)
+        test_set = dl.FER2013Dataset(ferplus=False, set_type=DatasetType.TEST, tf=val_transform)
+    elif args.dataset == "fer2013plus":
+        train_set = dl.FER2013Dataset(ferplus=True, set_type=DatasetType.TRAIN, tf=train_transform)
+        val_set = dl.FER2013Dataset(ferplus=True, set_type=DatasetType.VALIDATION, tf=val_transform)
+        test_set = dl.FER2013Dataset(ferplus=True, set_type=DatasetType.TEST, tf=val_transform)
+    else:
+        warnings.warn(f"Invalid dataset choice: {args.dataset}")
+        return
 
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=args.batch_size, shuffle=True,
@@ -217,8 +246,12 @@ def main_worker(gpu, ngpus_per_node, args):
         val_set, batch_size=args.batch_size, shuffle=False,
         num_workers=args.workers, pin_memory=True)
 
+    test_loader = torch.utils.data.DataLoader(
+        test_set, batch_size=args.batch_size, shuffle=False,
+        num_workers=args.workers, pin_memory=True)
+
     if args.evaluate:
-        validate(val_loader, model, criterion, args, conf_mat=True)
+        validate(test_loader, model, criterion, args, conf_mat=True)
         return
 
     early_stop = EarlyStopping(patience=args.patience)
