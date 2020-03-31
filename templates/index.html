@@ -28,7 +28,7 @@
     display: grid;
     grid-template-areas: 
       'header header header header header header' 
-      'middle middle middle middle middle middle' /* left and right columns taken out */
+      'left middle middle middle middle right' /*no left and right columns taken out */
       'footer footer footer footer footer footer';
     /* grid-column-gap: 10px; - gap between the columns */
   } 
@@ -37,7 +37,7 @@
   .middle,
   .right {
     padding: 10px;
-    height: 300px;
+    height: 800px;
   }
 
   /* Style the left column */
@@ -48,6 +48,7 @@
   /* Style the middle column */
   .middle {
     grid-area: middle;
+    align: center;
   }
 
   /* Style the right column */
@@ -82,10 +83,10 @@
     <h1 style="color:#DC143C; text-align: center;"><strong>Oizys Facial Expression Recognition System</strong></h1>
     <div class='heading'><p><strong>Facial expression recognition</strong> aims to extract additional information out of images of humans. The expressions used often consist of the following: happy, sad, fear, disgust, neutral, angry, surprise. Finding these expressions is a very difficult and non-trivial task which has led to the use of convolutional neural networks. By using large, labeled datasets, these neural networks can be trained to predict the expressions shown on a face.<br>
       <br> With a working facial expression recognition algorithm, we will then apply it to our own internet of things device using a Jetson nano and a camera. The goal of this device is that you could place it anywhere a user would like to gather data on the facial expressions of people walking by the camera. This could be used in front of advertisement signs, during interviews, or to observe movie watchers. In order to enable this kind of functionality, the device will connect to a server where various statistics of the expressions seen can be stored and later analyzed.</p></style></div>
-    <div class="header"><img src="Oizys.jpg" alt="Oizys logo" align="center" style="width:100px;height:100px;"></div>
-    <div class="middle"><img src="{{ url_for('video_feed') }}"></div>
+    <div class="header"><img src="https://i.imgur.com/zRurVRR.jpg" alt="Oizys logo" align="center" style="width:100px;height:100px;"></div>
+    <div class="middle"><img src="{{ url_for('video_feed') }}" align="center" style="width:750px;height:750px;"></div>
     <div class="footer">
-      <img src="StonyBrook.jpg" alt="Stony Brook University" align="left" style="width:106px;height:106px;">
+      <img src="https://i.imgur.com/8QWBrVO.jpg" alt="Stony Brook University" align="left" style="width:106px;height:106px;">
       <p>Stony Brook University ESE 441 Senior Design Project: Facial Expression Recognition System.</p>
       <p>Oizys-John Boccio, Muhammad Hussain, Yi-Cheng Cheng. Faculty Advisor: Peter Milder</p>
     </div>
