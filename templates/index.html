@@ -10,7 +10,8 @@
            }
         /* Style the header */
   .heading {
-    padding: 5px;
+    padding: 2px;
+    text-align: center;
     /*border:2px solid Violet;*/
   }
   .header {
@@ -58,7 +59,7 @@
   .footer {
     grid-area: footer;
     background-color: #f1f1f1;
-    padding: 5px;
+    padding: 2px;
     text-align: center;
     height: 110px;
   }
@@ -78,13 +79,13 @@
     <title>Oizys Facial Expression Recognition System</title>
   </head>
   <body>
-    <h1 style="color:#ff6347;"><strong>Oizys Facial Expression Recognition System</strong></h1>
-    <div class='heading'><p>Facial expression recognition aims to extract additional information out of images of humans. The expressions used often consist of the following: happy, sad, fear, disgust, neutral, angry, surprise. Finding these expressions is a very difficult and non-trivial task which has led to the use of convolutional neural networks. By using large, labeled datasets, these neural networks can be trained to predict the expressions shown on a face.<br>
-      <br> With a working facial expression recognition algorithm, we will then apply it to our own internet of things device using a jetson nano and a camera. The goal of this device is that you could place it anywhere a user would like to gather data on the facial expressions of people walking by the camera. This could be used in front of advertisement signs, during interviews, or to observe movie watchers. In order to enable this kind of functionality, the device will connect to a server where various statistics of the expressions seen can be stored and later analyzed.</p></style></div>
+    <h1 style="color:#DC143C; text-align: center;"><strong>Oizys Facial Expression Recognition System</strong></h1>
+    <div class='heading'><p><strong>Facial expression recognition</strong> aims to extract additional information out of images of humans. The expressions used often consist of the following: happy, sad, fear, disgust, neutral, angry, surprise. Finding these expressions is a very difficult and non-trivial task which has led to the use of convolutional neural networks. By using large, labeled datasets, these neural networks can be trained to predict the expressions shown on a face.<br>
+      <br> With a working facial expression recognition algorithm, we will then apply it to our own internet of things device using a Jetson nano and a camera. The goal of this device is that you could place it anywhere a user would like to gather data on the facial expressions of people walking by the camera. This could be used in front of advertisement signs, during interviews, or to observe movie watchers. In order to enable this kind of functionality, the device will connect to a server where various statistics of the expressions seen can be stored and later analyzed.</p></style></div>
     <div class="header"><img src="Oizys.jpg" alt="Oizys logo" align="center" style="width:100px;height:100px;"></div>
     <div class="middle"<img src="{{ url_for('video_feed') }}"></div>
    <div class="footer">
-       <img src="StonyBrook.jpg" alt="Stony Brook University" align="left" style="width:100px;height:100px;">
+       <img src="StonyBrook.jpg" alt="Stony Brook University" align="left" style="width:106px;height:106px;">
        <p>Stony Brook University ESE 441 Senior Design Project: Facial Expression Recognition System.</p>
        <p>Oizys-John Boccio, Muhammad Hussain, Yi-Cheng Cheng. Faculty Advisor: Peter Milder</p>
   </div>
