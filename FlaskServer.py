@@ -1,4 +1,6 @@
 from flask import Flask, Response, render_template, request
+from PIL import Image
+import argparse
 import threading
 import json
 import cv2
@@ -18,7 +20,8 @@ app = Flask(__name__)
 
 model = neural_nets.VggVdFaceFerDag()
 model.eval()
-vgg_transform = transforms.Compose([transforms.Resize(model.meta["imageSize"][0]),
+vgg_transform = transforms.Compose(
+                [transforms.Resize((model.meta["imageSize"][0], model.meta["imageSize"][1])),
                 transforms.ToTensor(),
                 lambda x: x * 255,
                 transforms.Normalize(mean=model.meta["mean"], std=model.meta["std"])])
@@ -50,6 +53,10 @@ def generate():
 
         # decode image
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        pil_img = Image.fromarray(img)
+        t_img = vgg_transform(pil_img)
+        expression = utils.get_expression(model, t_img)
+        print(expression)
         flag, img = cv2.imencode(".jpg", img)
         if not flag:
             continue
@@ -76,5 +83,10 @@ def video_feed():
 
 # check to see if this is the main thread of execution
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", debug=True)
+    parser = argparse.ArgumentParser(description='Host server to receive images')
+    parser.add_argument('--host', dest='host', default=None, help="Web address to host the server")
+    parser.add_argument('--port', dest='port', default=None, help="Port to host the server")
+    parser.add_argument('--debug', dest='debug', action='store_true', help='Set server to debug mode')
+    args = parser.parse_args()
+    app.run(host=args.host, port=args.port, debug=args.debug)
 

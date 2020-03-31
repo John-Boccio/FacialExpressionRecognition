@@ -44,7 +44,8 @@ class FER2013Dataset(Dataset):
 
             csv_reader = csv.reader(csv_file, delimiter=',')
             for i, entry in enumerate(csv_reader):
-                plus_entry = next(ferplus_reader)
+                if ferplus:
+                    plus_entry = next(ferplus_reader)
 
                 if self.set_type == DatasetType.TRAIN and entry[2] != "Training":
                     continue
