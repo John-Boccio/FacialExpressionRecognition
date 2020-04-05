@@ -14,8 +14,9 @@ import torchvision.transforms as transforms
 # initialize the output frame and a lock used to ensure thread-safe
 # exchanges of the output frames (useful for multiple browsers/tabs
 # are viewing the stream)
-image = None
+image = {'img': None, 'expression': None}
 image_lock = threading.Lock()
+processing_lock = threading.Lock()
 new_image_event = threading.Event()
 new_image_event.clear()
 
@@ -51,21 +52,25 @@ def image_generator():
         # Acquire lock for image and get image data
         with image_lock:
             # convert string of image data to uint8
-            nparr = np.fromstring(image, np.uint8)
+            nparr = np.fromstring(image['img'], np.uint8)
+            processed = (image['expression'] is not None)
 
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        pil_img = Image.fromarray(img)
-        t_img = vgg_transform(pil_img)
-        expression, exp_pdist = utils.get_expression(model, t_img)
-        # TODO: Figure out how to show this on webpage
-        print(expression)
-        flag, img = cv2.imencode(".jpg", img)
-        if not flag:
-            continue
+        with processing_lock:
+            if not processed:
+                img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                pil_img = Image.fromarray(img)
+                t_img = vgg_transform(pil_img)
+                expression, exp_pdist = utils.get_expression(model, t_img)
+                # TODO: Figure out how to show this on webpage
+                image['expression'] = expression
+                print(expression)
+                flag, img = cv2.imencode(".jpg", img)
+                if not flag:
+                    continue
 
-        # yield the output frame in the byte format
-        yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
-               bytearray(img) + b'\r\n')
+                # yield the output frame in the byte format
+                yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
+                       bytearray(img) + b'\r\n')
 
 
 @app.route("/video_feed", methods=['GET', 'POST'])
@@ -76,7 +81,8 @@ def video_feed():
                         mimetype="multipart/x-mixed-replace; boundary=frame")
     elif request.method == 'POST':
         with image_lock:
-            image = request.get_data()
+            image['img'] = request.get_data()
+            image['expression'] = None
         # Wakeup the image generator so it can process the new image
         new_image_event.set()
         response = json.dumps({'message': 'image received'})
