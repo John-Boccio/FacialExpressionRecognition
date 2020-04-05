@@ -32,7 +32,11 @@ def send_frames(video, addr, fps=10, frames_to_send=-1):
             continue
 
         headers = {'content-type': 'image/jpeg'}
-        requests.post(addr, data=encodedImage.tostring(), headers=headers)
+        try:
+            requests.post(addr, data=encodedImage.tostring(), headers=headers)
+        except Exception as e:
+            print(f"Error occurred while trying to send image:\n\t{e}\nExiting...")
+            exit()
         frames_sent += 1
 
         if frames_sent % fps == 0:
