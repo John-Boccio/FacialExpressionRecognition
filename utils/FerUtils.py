@@ -101,7 +101,9 @@ def graph_losses(train_losses, val_losses, save_path="losses.png"):
     plt.savefig(save_path, bbox_inches='tight')
 
 def get_expression(model, img, exp_class=FerExpression):
-    nn_prediction = model.forward(img.unsqueeze(0))
-    _, predicted = torch.max(nn_prediction.data, 1)
+    with torch.no_grad:
+        model_prediction = model.forward(img.unsqueeze(0))
+    _, predicted = torch.max(model_prediction.data, 1)
     expression = exp_class(predicted.item())
-    return expression.name
+    # Return the expression with the greatest probability and the probability distribution
+    return expression.name, model_prediction.data

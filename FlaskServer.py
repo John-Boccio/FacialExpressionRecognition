@@ -16,17 +16,22 @@ import torchvision.transforms as transforms
 # are viewing the stream)
 image = None
 image_lock = threading.Lock()
-app = Flask(__name__)
+new_image_event = threading.Event()
+new_image_event.clear()
 
 model = neural_nets.VggVdFaceFerDag()
 model.eval()
 vgg_transform = transforms.Compose(
                 [transforms.Resize((model.meta["imageSize"][0], model.meta["imageSize"][1])),
                 transforms.ToTensor(),
-                lambda x: x * 255,
+                transforms.Lambda(lambda x: x * 255),
                 transforms.Normalize(mean=model.meta["mean"], std=model.meta["std"])])
+
 if torch.cuda.is_available():
     model = torch.nn.DataParallel(model).cuda()
+
+app = Flask(__name__)
+
 
 @app.route("/", methods=['GET'])
 def index():
@@ -34,28 +39,25 @@ def index():
     return render_template("index.html")
 
 
-def generate():
-    # grab global references to the output frame and lock variables
-    global image, image_lock
+def image_generator():
+    global image, image_lock, new_image_event
 
-    # loop over frames from the output stream
+    # Continuously loop over the frames received from /video_feed
     while True:
-        # wait until the lock is acquired
-        with image_lock:
-            # check if the output frame is available, otherwise skip
-            # the iteration of the loop
-            if image is None:
-                continue
+        # sleep until a new image to comes
+        new_image_event.wait()
+        new_image_event.clear()
 
+        # Acquire lock for image and get image data
+        with image_lock:
             # convert string of image data to uint8
             nparr = np.fromstring(image, np.uint8)
-            image = None
 
-        # decode image
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         pil_img = Image.fromarray(img)
         t_img = vgg_transform(pil_img)
-        expression = utils.get_expression(model, t_img)
+        expression, exp_pdist = utils.get_expression(model, t_img)
+        # TODO: Figure out how to show this on webpage
         print(expression)
         flag, img = cv2.imencode(".jpg", img)
         if not flag:
@@ -70,11 +72,13 @@ def generate():
 def video_feed():
     global image, image_lock
     if request.method == 'GET':
-        return Response(generate(),
+        return Response(image_generator(),
                         mimetype="multipart/x-mixed-replace; boundary=frame")
     elif request.method == 'POST':
         with image_lock:
             image = request.get_data()
+        # Wakeup the image generator so it can process the new image
+        new_image_event.set()
         response = json.dumps({'message': 'image received'})
         return Response(response=response, status=200, mimetype="application/json")
     response = json.dumps({'message': 'invalid usage'})
