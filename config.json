@@ -6,10 +6,10 @@
       "emotion_dir": ""
     },
     "FER2013": {
-      "csv_path": "/Users/johnboccio/Datasets/fer2013/fer2013.csv"
+      "csv_path": "C:\\Users\\OWNER\\Desktop\\John\\dataset\\fer2013.csv"
     },
     "FERplus": {
-      "csv_path": "/Users/johnboccio/Datasets/fer2013/fer2013new.csv"
+      "csv_path": "C:\\Users\\OWNER\\Desktop\\John\\dataset\\fer2013new.csv"
     },
     "expW": {
       "image_dir": "/Users/johnboccio/Datasets/ExpW/data/image/",
