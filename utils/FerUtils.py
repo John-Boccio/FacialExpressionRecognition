@@ -100,7 +100,10 @@ def graph_losses(train_losses, val_losses, save_path="losses.png"):
     plt.tight_layout()
     plt.savefig(save_path, bbox_inches='tight')
 
+
 def get_expression(model, img, need_softmax=False, exp_class=FerExpression):
+    if torch.cuda.is_available():
+        img = img.cuda(non_blocking=True)
     with torch.no_grad():
         model_prediction = model.forward(img.unsqueeze(0))
     _, predicted = torch.max(model_prediction.data, 1)
@@ -113,3 +116,31 @@ def get_expression(model, img, need_softmax=False, exp_class=FerExpression):
 
     # Return the expression with the greatest probability and the probability distribution
     return expression.name, prob_dist
+
+
+def jetson_gstreamer_pipeline(
+    capture_width=1280,
+    capture_height=720,
+    display_width=1280,
+    display_height=720,
+    framerate=30,
+    flip_method=2,
+):
+    return (
+        "nvarguscamerasrc ! "
+        "video/x-raw(memory:NVMM), "
+        "width=(int)%d, height=(int)%d, "
+        "format=(string)NV12, framerate=(fraction)%d/1 ! "
+        "nvvidconv flip-method=%d ! "
+        "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
+        "videoconvert ! "
+        "video/x-raw, format=(string)BGR ! appsink"
+        % (
+            capture_width,
+            capture_height,
+            framerate,
+            flip_method,
+            display_width,
+            display_height,
+        )
+    )

@@ -103,11 +103,6 @@ parser.add_argument('--patience', default=20, type=int, dest='patience', metavar
 parser.add_argument('--visdom', dest='visdom', action='store_true',
                     help='plot training progress using visdom')
 
-from utils import show_distribution
-
-test_set = dl.FER2013Dataset(ferplus=False, set_type=DatasetType.TEST, tf=None)
-show_distribution(test_set, "FER2013 Test Set Distribution", ferplus=False)
-
 
 def main():
     args = parser.parse_args()
