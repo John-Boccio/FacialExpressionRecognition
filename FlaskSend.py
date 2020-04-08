@@ -4,17 +4,18 @@ import datetime
 import requests
 import time
 
-from image_processing import histogram_equalization, crop_face_transform
+from image_processing import crop_face_transform
 import utils
 
 
-def send_frames(video, addr, fps=10, frames_to_send=-1):
+def send_frames(video, addr, fps=10, frames_to_send=-1, crop=False):
     # Minimum number of milliseconds we should take to process 1 frame to achieve <= 'fps'
     mspf = (1/fps)*1000
     time_ms = lambda: int(round(time.time()*1000))
     send_forever = (frames_to_send == -1)
     frames_sent = 0
     global_st_time = time.time()
+    crop = "True" if crop else "False"
     while frames_sent < frames_to_send or send_forever:
         st_time = time_ms()
         success, frame = video.read()
@@ -22,9 +23,10 @@ def send_frames(video, addr, fps=10, frames_to_send=-1):
             print("ERROR: Could not capture from web cam")
             break
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = crop_face_transform(rgb_frame)
+        if crop:
+            frame = crop_face_transform(rgb_frame)
+
         frame = cv2.resize(frame, dsize=(360, 240))
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
         # grab the current timestamp and draw it on the frame
         timestamp = datetime.datetime.now()
@@ -38,7 +40,7 @@ def send_frames(video, addr, fps=10, frames_to_send=-1):
 
         headers = {'content-type': 'image/jpeg'}
         try:
-            requests.post(addr, data=encodedImage.tostring(), headers=headers)
+            requests.post(addr + "/cropped=" + crop, data=encodedImage.tostring(), headers=headers)
         except Exception as e:
             print(f"Error occurred while trying to send image:\n\t{e}\nExiting...")
             exit()
@@ -65,6 +67,8 @@ if __name__ == "__main__":
                         help='FPS to capture images at (default: 15)')
     parser.add_argument('-j', '--jetson', dest='jetson', action='store_true',
                         help='Flag specifying if you are running this from an nvidia jetson')
+    parser.add_argument('-c', '--crop', dest='crop', action='store_true',
+                        help='Flag specifying if you would like to perform face cropping before sending the image')
     args = parser.parse_args()
 
     if args.jetson:
@@ -72,6 +76,6 @@ if __name__ == "__main__":
     else:
         video = cv2.VideoCapture(0)
 
-    send_frames(video, addr=args.address, fps=args.fps, frames_to_send=args.frames)
+    send_frames(video, addr=args.address, fps=args.fps, frames_to_send=args.frames, crop=args.crop)
     video.release()
 
