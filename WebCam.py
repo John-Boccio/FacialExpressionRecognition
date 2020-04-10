@@ -5,57 +5,59 @@ import image_processing
 import neural_nets as nns
 import torchvision.transforms as transforms
 import torch
-import torch.nn as nn
-import torch.optim as optim
 import utils
 
 
-parser = argparse.ArgumentParser(description="Facial Expression Recognition")
-parser.add_argument('--net',
-                    dest='net',
-                    help='Choose the CNN to use for FER',
-                    default='vgg')
-parsed = parser.parse_args()
+parser = argparse.ArgumentParser(description='Perform Face Crop and/or FER from your web cam')
+parser.add_argument('-j', '--jetson', dest='jetson', action='store_true',
+                    help='Flag specifying if you are running this from an nvidia jetson')
+parser.add_argument('--fer', dest='fer', action='store_true',
+                    help='Flag specifying if you would like to run facial expression recognition')
+parser.add_argument('-f', '--frames', dest='frames', default=-1, type=int, metavar='F',
+                    help='Amount of frames to capture from the web cam')
+args = parser.parse_args()
 
-if parsed.net == 'vgg':
-    net = nns.VggVdFaceFerDag()
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.005, momentum=0.9)
+if args.fer:
+    model = nns.VggVdFaceFerDag()
     transform = transforms.Compose(
-                [image_processing.crop_face_transform,
-                 transforms.Resize(net.meta["imageSize"][0]),
-                 transforms.ToTensor(),
-                 lambda x: x*255,
-                 transforms.Normalize(mean=net.meta["mean"], std=net.meta["std"])])
+                    [transforms.Resize(model.meta["imageSize"][0]),
+                     transforms.ToTensor(),
+                     transforms.Lambda(lambda x: x*255),
+                     transforms.Normalize(mean=model.meta["mean"], std=model.meta["std"])])
 
-"""
-trainset = dl.FER2013Dataset(set_type=DatasetType.TRAIN, tf=None)
-trainloader = data.DataLoader(trainset, batch_size=4,
-                              shuffle=True, num_workers=0)
-testset = dl.FER2013Dataset(set_type=DatasetType.TEST, tf=transform)
-testloader = data.DataLoader(testset, batch_size=4,
-                             shuffle=True, num_workers=0)
+    model.eval()
+    if torch.cuda.is_available():
+        model = torch.nn.DataParallel(model).cuda()
 
-utils.fer2013_test_nn(net, testloader)
-"""
+if args.jetson:
+    cap = cv2.VideoCapture(utils.jetson_gstreamer_pipeline(), cv2.CAP_GSTREAMER)
+else:
+    cap = cv2.VideoCapture(0)
 
-cap = cv2.VideoCapture(0)
+if args.frames < 0:
+    capture_forever = True
+else:
+    capture_forever = False
 
-while(True):
+captured_frames = 0
+while capture_forever or captured_frames < args.frames:
     # Capture frame-by-frame
-    ret, frame = cap.read()
-
-    pil_frame = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-    faces = image_processing.crop_faces(pil_frame)
+    success, frame = cap.read()
+    if not success:
+        print("ERROR: Could not capture from web cam")
+        break
+    captured_frames += 1
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    faces = image_processing.crop_faces(rgb_frame)
+    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
     for f in faces:
         x, y = f["coord"]
         w, h = f["size"]
         frame = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
-        nn_prediction = net.forward(transform(f["img"]).unsqueeze(0))
-        _, predicted = torch.max(nn_prediction.data, 1)
-        expression = utils.Expression(predicted.item())
-        frame = cv2.putText(frame, str(expression), (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+        if args.fer:
+            expression, _ = utils.get_expression(model, transform(Image.fromarray(f["img"])), need_softmax=True)
+            frame = cv2.putText(frame, expression, (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
     cv2.imshow('webcam', frame)
     if cv2.waitKey(1) & 0xFF == ord(' '):
         break
