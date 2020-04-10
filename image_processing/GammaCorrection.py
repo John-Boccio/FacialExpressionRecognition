@@ -20,22 +20,22 @@ def adjust_gamma(image, gamma=1.0):
     # apply gamma correction using the lookup table
     return cv2.LUT(image, table)
 
-    # construct the argument parse and parse the arguments
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-i", "--image", required=True,
-                    help="path to input image")
-    args = vars(ap.parse_args())
+# construct the argument parse and parse the arguments
+ap = argparse.ArgumentParser()
+ap.add_argument("-i", "--image", required=True,
+                help="path to input image")
+args = vars(ap.parse_args())
 
-    # load the original image
-    original = cv2.imread(args["image"])
+# load the original image
+original = cv2.imread(args["image"])
 
-    # loop over various values of gamma
-    for gamma in np.arange(1.0, 3.0, 1.0):
-        # ignore when gamma is 1 (there will be no change to the image)
-        if gamma == 1:
-            continue
+# loop over various values of gamma
+for gamma in np.arange(1.0, 3.0, 1.0):
+    # ignore when gamma is 1 (there will be no change to the image)
+    if gamma == 1:
+        continue
 
-        # apply gamma correction and show the images
-        gamma = gamma if gamma > 0 else 0.1
-        adjusted = adjust_gamma(original, gamma=gamma)
-        return adjusted
+    # apply gamma correction and show the images
+    gamma = gamma if gamma > 0 else 0.1
+    adjusted = adjust_gamma(original, gamma=gamma)
+    return adjusted
