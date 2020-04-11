@@ -38,6 +38,7 @@ from utils import FerPlusExpression, FerExpression
 from utils import DatasetType
 from utils import VisdomLinePlotter
 from image_processing import histogram_equalization
+from image_processing import adjust_gamma
 
 model_names = [
     'vggface',
@@ -151,7 +152,7 @@ def main_worker(gpu, ngpus_per_node, args):
         val_transform = transforms.Compose(
                 [transforms.Lambda(lambda x: x.convert('RGB')),
                 transforms.Resize(model.meta["imageSize"][0]),
-                transforms.Lambda(lambda x: histogram_equalization(np.array(x))),
+                transforms.Lambda(adjust_gamma),
                 transforms.ToTensor(),
                 transforms.Lambda(lambda x: x * 255),
                 transforms.Normalize(mean=model.meta["mean"], std=model.meta["std"])])

@@ -10,7 +10,6 @@ from __future__ import print_function
 import numpy as np
 import argparse
 import cv2
-from GammaCorrection import adjust_gamma
 
 
 def crop_faces(image):
@@ -49,10 +48,22 @@ def histogram_equalization(image):
     return img_output
 
 
+def adjust_gamma(image, gamma=2.0):
+    image = np.array(image)
+    # build a lookup table mapping the pixel values [0, 255] to
+    # their adjusted gamma values
+    invGamma = 1.0 / gamma
+    table = np.array([((i / 255.0) ** invGamma) * 255
+                      for i in np.arange(0, 256)]).astype("uint8")
+
+    # apply gamma correction using the lookup table
+    gc = cv2.LUT(image, table)
+    return gc
+
+
 def crop_face_transform(image):
     faces = crop_faces(image)
-    faces = adjust_gamma(faces, gamma=1.0)
+    faces = adjust_gamma(faces, gamma=2.0)
     if len(faces) == 0:
         return image
     return faces[0]["img"]
-
