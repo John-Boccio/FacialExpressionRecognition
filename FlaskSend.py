@@ -79,6 +79,6 @@ if __name__ == "__main__":
     else:
         video = cv2.VideoCapture(0)
 
-    send_frames(video, addr=args.address, fps=args.fps, frames_to_send=args.frames, crop=args.crop)
+    send_frames(video, args.address, size=tuple(args.size), fps=args.fps, frames_to_send=args.frames, crop=args.crop)
     video.release()
 
