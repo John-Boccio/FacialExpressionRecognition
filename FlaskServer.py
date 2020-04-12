@@ -10,7 +10,7 @@ import utils
 
 import neural_nets
 import torchvision.transforms as transforms
-from image_processing import crop_face_transform
+import image_processing
 
 
 # Contains the unprocessed image from video_feed
@@ -29,10 +29,16 @@ fer_processing_event = threading.Event()
 
 model = neural_nets.VggVdFaceFerDag()
 model.eval()
+
+
+def mult_255(img):
+    return img * 255
+
+
 vgg_transform = transforms.Compose(
                 [transforms.Resize((model.meta["imageSize"][0], model.meta["imageSize"][1])),
                 transforms.ToTensor(),
-                transforms.Lambda(lambda x: x * 255),
+                transforms.Lambda(mult_255),
                 transforms.Normalize(mean=model.meta["mean"], std=model.meta["std"])])
 
 if torch.cuda.is_available():
@@ -62,14 +68,25 @@ def fer_processor():
 
         # Process the image and make it available for the fer_generator
         np_img = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+        # np_img is RGB
         if not cropped:
-            np_img = crop_face_transform(np_img)
-            np_img = cv2.cvtColor(np_img, cv2.COLOR_RGB2BGR)
+            face = image_processing.crop_face_transform(np_img)
+            x, y = face["coord"]
+            w, h = face["size"]
+            np_img = cv2.rectangle(np_img, (x, y), (x + w, y + h), (0, 0, 255), 1)
+            pil_img = Image.fromarray(face['img'])
+            transformed_img = vgg_transform(pil_img)
+            expression, exp_pdist = utils.get_expression(model, transformed_img, need_softmax=True)
+            np_img = cv2.putText(np_img, expression, (max(x, 10), max(y-5, 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
+        else:
+            face = cv2.cvtColor(np_img, cv2.COLOR_BGR2GRAY)
+            pil_img = Image.fromarray(face)
+            transformed_img = vgg_transform(pil_img)
+            expression, exp_pdist = utils.get_expression(model, transformed_img, need_softmax=True)
+            np_img = cv2.putText(np_img, str(expression), (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
 
-        pil_img = Image.fromarray(np_img)
-        transformed_img = vgg_transform(pil_img)
-        expression, exp_pdist = utils.get_expression(model, transformed_img, need_softmax=True)
-        cv2.putText(np_img, str(expression), (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+        np_img = cv2.resize(np_img, (360*2, 240*2))
+
         success, img = cv2.imencode(".jpg", np_img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
         if success:
             with fer_processing_lock:

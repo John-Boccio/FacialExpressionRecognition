@@ -15,16 +15,16 @@ def send_frames(video, addr, fps=10, frames_to_send=-1, crop=False):
     send_forever = (frames_to_send == -1)
     frames_sent = 0
     global_st_time = time.time()
-    crop = "True" if crop else "False"
+    crop_str = "True" if crop else "False"
     while frames_sent < frames_to_send or send_forever:
         st_time = time_ms()
         success, frame = video.read()
         if not success:
             print("ERROR: Could not capture from web cam")
             break
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
         if crop:
-            frame = crop_face_transform(rgb_frame)
+            frame = crop_face_transform(frame)["img"]
 
         frame = cv2.resize(frame, dsize=(360, 240))
 
@@ -40,7 +40,7 @@ def send_frames(video, addr, fps=10, frames_to_send=-1, crop=False):
 
         headers = {'content-type': 'image/jpeg'}
         try:
-            requests.post(addr + "/cropped=" + crop, data=encodedImage.tostring(), headers=headers)
+            requests.post(addr + "/cropped=" + crop_str, data=encodedImage.tostring(), headers=headers)
         except Exception as e:
             print(f"Error occurred while trying to send image:\n\t{e}\nExiting...")
             exit()
