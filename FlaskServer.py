@@ -69,7 +69,7 @@ def fer_processor():
         pil_img = Image.fromarray(np_img)
         transformed_img = vgg_transform(pil_img)
         expression, exp_pdist = utils.get_expression(model, transformed_img, need_softmax=True)
-        cv2.putText(np_img, str(expression), (10, np_img.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+        cv2.putText(np_img, str(expression), (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
         success, img = cv2.imencode(".jpg", np_img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
         if success:
             with fer_processing_lock:
