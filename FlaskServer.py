@@ -79,8 +79,7 @@ def fer_processor():
             expression, exp_pdist = utils.get_expression(model, transformed_img, need_softmax=True)
             np_img = cv2.putText(np_img, expression, (max(x, 10), max(y-5, 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
         else:
-            face = cv2.cvtColor(np_img, cv2.COLOR_BGR2GRAY)
-            pil_img = Image.fromarray(face)
+            pil_img = Image.fromarray(np_img)
             transformed_img = vgg_transform(pil_img)
             expression, exp_pdist = utils.get_expression(model, transformed_img, need_softmax=True)
             np_img = cv2.putText(np_img, str(expression), (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
