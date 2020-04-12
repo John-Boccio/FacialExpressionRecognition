@@ -47,12 +47,6 @@ if torch.cuda.is_available():
 app = Flask(__name__)
 
 
-@app.route("/", methods=['GET'])
-def index():
-    # return the rendered template
-    return render_template("index.html")
-
-
 def fer_processor():
     global image, image_lock, image_event, fer_processing, fer_processing_lock, fer_processing_event
 
@@ -65,10 +59,10 @@ def fer_processor():
             # Image data is sent as string from FlaskSend.py
             np_img = np.frombuffer(image['data'], np.uint8)
             cropped = image['cropped']
+            size = image['size']
 
         # Process the image and make it available for the fer_generator
         np_img = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
-        # np_img is RGB
         if not cropped:
             face = image_processing.crop_face_transform(np_img)
             x, y = face["coord"]
@@ -84,7 +78,7 @@ def fer_processor():
             expression, exp_pdist = utils.get_expression(model, transformed_img, need_softmax=True)
             np_img = cv2.putText(np_img, str(expression), (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
 
-        np_img = cv2.resize(np_img, (360*2, 240*2))
+        np_img = cv2.resize(np_img, (size[0], size[1]))
 
         success, img = cv2.imencode(".jpg", np_img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
         if success:
@@ -119,17 +113,24 @@ def fer_generator():
         yield b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(img) + b'\r\n'
 
 
+@app.route("/", methods=['GET'])
+def index():
+    # return the rendered template
+    return render_template("index.html")
+
+
 @app.route("/video_feed", methods=['GET'])
 def video_feed():
     return Response(fer_generator(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
-@app.route("/video_feed/cropped=<cropped>", methods=['POST'])
-def video_feed_receive(cropped):
+@app.route("/video_feed/cropped=<cropped>&width=<width>&height=<height>", methods=['POST'])
+def video_feed_receive(cropped, width, height):
     global image, image_lock
     with image_lock:
         image['data'] = request.get_data()
         image['cropped'] = True if cropped == "True" else False
+        image['size'] = (int(width), int(height))
     # Wakeup the image generator so it can process the new image
     image_event.set()
     response = json.dumps({'message': 'image received'})
