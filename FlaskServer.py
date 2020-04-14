@@ -53,6 +53,17 @@ if torch.cuda.is_available():
 
 app = Flask(__name__)
 
+old_expression = None
+fig = plt.figure()
+ax1 = plt.axes(ylim=(0,1))
+line, = ax1.plot([])
+plt.ylabel('Probability')
+plotColors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+plotLabels = ['ANGRY', 'DISGUST', 'FEAR', 'HAPPY', 'SAD', 'SURPRISE', 'NEUTRAL']
+lines = []
+for index in range(6):
+    lobj = ax1.plot([],c=plotColors[index], label=plotLabels[index])[0]
+    lines.append(lobj)
 
 def fer_graph_processor():
     global fer_processing, fer_processing_lock, fer_processing_event, fer_graph, fer_graph_lock, fer_graph_event
@@ -63,9 +74,15 @@ def fer_graph_processor():
 
         with fer_processing_lock:
             expres_pdist = fer_processing['exp_pdist']
-
         # Update graph with new expres_pdist data points
-
+        lines[0].set_ydata(np.append(lines[0].get_ydata, expres_pdist[0]))
+        lines[1].set_ydata(np.append(lines[1].get_ydata, expres_pdist[1]))
+        lines[2].set_ydata(np.append(lines[2].get_ydata, expres_pdist[2]))
+        lines[3].set_ydata(np.append(lines[3].get_ydata, expres_pdist[3]))
+        lines[4].set_ydata(np.append(lines[4].get_ydata, expres_pdist[4]))
+        lines[5].set_ydata(np.append(lines[5].get_ydata, expres_pdist[5]))
+        lines[6].set_ydata(np.append(lines[6].get_ydata, expres_pdist[6]))
+        plt.show()
 
         # Save plot as numpy image
         img = None
@@ -114,50 +131,42 @@ def fer_processor(print_interval=-1, log=None):
 
         fps_tracker.frame_sent()
 
-old_expression = None
-count = 0
-fig = plt.figure()
-ax1 = plt.axes(ylim=(0,1))
-line, = ax1.plot([])
-plt.ylabel('Probability')
-plotColors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-plotLabels = ['ANGRY', 'DISGUST', 'FEAR', 'HAPPY', 'SAD', 'SURPRISE', 'NEUTRAL']
-lines = []
-for index in range(6):
-    lobj = ax1.plot([],c=plotColors[index], label=plotLabels[index])[0]
-    lines.append(lobj)
+#old_expression = None
+#fig = plt.figure()
+#ax1 = plt.axes(ylim=(0,1))
+#line, = plt.plot([])
+#plt.ylabel('Probability')
+#plotColors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+#plotLabels = ['ANGRY', 'DISGUST', 'FEAR', 'HAPPY', 'SAD', 'SURPRISE', 'NEUTRAL']
+#lines = []
+#for index in range(6):
+#    lobj = ax1.plot([],c=plotColors[index], label=plotLabels[index])[0]
+#    lines.append(lobj)
+#y0 = []
+#y1 = []
+#y2 = []
+#y3 = []
+#y4 = []
+#y5 = []
+#y6 = []
 
-def init():
-    for line in lines:
-        line.set_ydata([])
-    return lines
-y0 = []
-y1 = []
-y2 = []
-y3 = []
-y4 = []
-y5 = []
-y6 = []
+#def animate(i):
+#    global old_expression;
+#    expres_pdist = fer_processing['exp_pdist']
+#    if(expres_pdist[0] != old_expression[0] or expres_pdist[1] != old_expression[1] or  expres_pdist[2] != old_expression[2] or expres_pdist[3] != old_expression[3] or expres_pdist[4] != old_expression[4] or expres_pdist[5] != old_expression[5] or expres_pdist[6] != old_expression[6] or expres_pdist[7] != old_expression[7]):
+#        old_expression = expres_pdist
+#        y0.append(expres_pdist[0])
+#        y1.append(expres_pdist[1])
+#        y2.append(expres_pdist[2])
+#        y3.append(expres_pdist[3])
+#        y4.append(expres_pdist[4])
+#        y5.append(expres_pdist[5])
+#        y6.append(expres_pdist[6])
+#        ylist=[y0, y1, y2, y3, y4, y5, y6]
 
-def animate(i):
-    global count, old_expression;
-    expres_pdist = fer_processing['exp_pdist']
-    if(expres_pdist[0] != old_expression[0] or expres_pdist[1] != old_expression[1] or  expres_pdist[2] != old_expression[2] or expres_pdist[3] != old_expression[3] or expres_pdist[4] != old_expression[4] or expres_pdist[5] != old_expression[5] or expres_pdist[6] != old_expression[6] or expres_pdist[7] != old_expression[7]):
-        old_expression = expres_pdist
-        y0.append(expres_pdist[0])
-        y1.append(expres_pdist[1])
-        y2.append(expres_pdist[2])
-        y3.append(expres_pdist[3])
-        y4.append(expres_pdist[4])
-        y5.append(expres_pdist[5])
-        y6.append(expres_pdist[6])
-        ylist=[y0, y1, y2, y3, y4, y5, y6]
-
-        for lnum, line in enumerate(lines):
-            line.set_ydata(ylist[lnum])  # set data for each line separately.
-        return lines
-anim = animation.FuncAnimation(fig, animate, init_func=init, interval=10, blit=True)
-plt.show()
+#        for lnum, line in enumerate(lines):
+#            line.set_ydata(ylist[lnum])  # set data for each line separately.
+#        return lines
 
 def fer_graph_generator():
     global fer_graph, fer_graph_lock, fer_graph_event
