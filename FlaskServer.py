@@ -177,6 +177,20 @@ def fer_generator():
             yield b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(img) + b'\r\n'
 
 
+def fer_graph_generator():
+    global fer_processing, fer_processing_lock, fer_processing_event
+
+    while True:
+        fer_processing_event.wait()
+        fer_processing_event.clear()
+
+        with fer_processing_lock:
+            expres_pdist = fer_processing['exp_pdist']
+
+        # Append expres_pdist data to graph and display graph here
+
+
+
 @app.route("/", methods=['GET'])
 def index():
     # return the rendered template
