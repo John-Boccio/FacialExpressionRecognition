@@ -30,6 +30,10 @@ fer_processing_lock = threading.Lock()
 # Event signaling the processing of a new image
 fer_processing_event = threading.Event()
 
+fer_graph = {}
+fer_graph_lock = threading.Lock()
+fer_graph_event = threading.Event()
+
 model = neural_nets.VggVdFaceFerDag()
 model.eval()
 
@@ -48,6 +52,28 @@ if torch.cuda.is_available():
     model = torch.nn.DataParallel(model).cuda()
 
 app = Flask(__name__)
+
+
+def fer_graph_processor():
+    global fer_processing, fer_processing_lock, fer_processing_event, fer_graph, fer_graph_lock, fer_graph_event
+
+    while True:
+        fer_processing_event.wait()
+        fer_processing_event.clear()
+
+        with fer_processing_lock:
+            expres_pdist = fer_processing['exp_pdist']
+
+        # Update graph with new expres_pdist data points
+
+
+        # Save plot as numpy image
+        img = None
+
+        # Send the plot to fer_graph_generator
+        with fer_graph_lock:
+            fer_graph['plot'] = img
+        fer_graph_event.set()
 
 
 def fer_processor(print_interval=-1, log=None):
@@ -134,16 +160,19 @@ anim = animation.FuncAnimation(fig, animate, init_func=init, interval=10, blit=T
 plt.show()
 
 def fer_graph_generator():
-    global fer_processing, fer_processing_lock, fer_processing_event
+    global fer_graph, fer_graph_lock, fer_graph_event
 
     while True:
-        fer_processing_event.wait()
-        fer_processing_event.clear()
+        fer_graph_event.wait()
+        fer_graph_event.clear()
 
-        with fer_processing_lock:
-            expres_pdist = fer_processing['exp_pdist']
+        with fer_graph_lock:
+            plot = fer_graph['plot']
 
-        # Append expres_pdist data to graph and display graph here
+        success, plot = cv2.imencode(".jpg", plot, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+        if success:
+            # yield the output frame in the byte format
+            yield b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(plot) + b'\r\n'
 
 
 def fer_generator():
@@ -234,5 +263,8 @@ if __name__ == '__main__':
     # Start the thread that will be doing the facial expression recognition on the received images
     fer_processing_thread = threading.Thread(target=fer_processor, args=(args.print, args.log), daemon=True)
     fer_processing_thread.start()
+
+    fer_graphing_thread = threading.Thread(target=fer_graph_processor, daemon=True)
+    fer_graphing_thread.start()
 
     app.run(host=args.host, port=args.port, debug=args.debug)
