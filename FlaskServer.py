@@ -133,6 +133,19 @@ def animate(i):
 anim = animation.FuncAnimation(fig, animate, init_func=init, interval=10, blit=True)
 plt.show()
 
+def fer_graph_generator():
+    global fer_processing, fer_processing_lock, fer_processing_event
+
+    while True:
+        fer_processing_event.wait()
+        fer_processing_event.clear()
+
+        with fer_processing_lock:
+            expres_pdist = fer_processing['exp_pdist']
+
+        # Append expres_pdist data to graph and display graph here
+
+
 def fer_generator():
     global image, image_lock
 
@@ -177,24 +190,15 @@ def fer_generator():
             yield b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(img) + b'\r\n'
 
 
-def fer_graph_generator():
-    global fer_processing, fer_processing_lock, fer_processing_event
-
-    while True:
-        fer_processing_event.wait()
-        fer_processing_event.clear()
-
-        with fer_processing_lock:
-            expres_pdist = fer_processing['exp_pdist']
-
-        # Append expres_pdist data to graph and display graph here
-
-
-
 @app.route("/", methods=['GET'])
 def index():
     # return the rendered template
     return render_template("index.html")
+
+
+@app.route("/graph_feed", methods=['GET'])
+def graph_feed():
+    return Response(fer_graph_generator(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
 @app.route("/video_feed", methods=['GET'])
