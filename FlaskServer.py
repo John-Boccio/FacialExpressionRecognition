@@ -30,7 +30,8 @@ fer_processing = {}
 # This lock allows for the decoded image and expression to be exchanged between fer_processor and fer_generator
 fer_processing_lock = threading.Lock()
 # Event signaling the processing of a new image
-fer_processing_event = threading.Event()
+fer_processing_event_graph = threading.Event()
+fer_processing_event_exp = threading.Event()
 
 fer_graph = {}
 fer_graph_lock = threading.Lock()
@@ -57,12 +58,12 @@ app = Flask(__name__)
 
 
 def fer_graph_processor():
-    global fer_processing, fer_processing_lock, fer_processing_event, fer_graph, fer_graph_lock, fer_graph_event
+    global fer_processing, fer_processing_lock, fer_processing_event_graph, fer_graph, fer_graph_lock, fer_graph_event
 
     exp_graph = utils.ExpressionGraph()
     while True:
-        fer_processing_event.wait()
-        fer_processing_event.clear()
+        fer_processing_event_graph.wait()
+        fer_processing_event_graph.clear()
 
         with fer_processing_lock:
             expres_pdist = fer_processing['exp_pdist']
@@ -77,7 +78,7 @@ def fer_graph_processor():
 
 
 def fer_processor(print_interval=-1, log=None):
-    global image, image_lock, image_event, fer_processing, fer_processing_lock, fer_processing_event
+    global image, image_lock, image_event, fer_processing, fer_processing_lock, fer_processing_event_graph, fer_processing_event_exp
 
     fps_tracker = utils.FpsTracker(print_interval=print_interval, log=log)
     while True:
@@ -109,8 +110,9 @@ def fer_processor(print_interval=-1, log=None):
             fer_processing['exp'] = expression
             fer_processing['exp_pdist'] = exp_pdist
             fer_processing['face'] = face
-        # Let fer_generator know of the new data
-        fer_processing_event.set()
+            # Let fer_generator know of the new data
+            fer_processing_event_graph.set()
+            fer_processing_event_exp.set()
 
         fps_tracker.frame_sent()
 
@@ -132,7 +134,7 @@ def fer_graph_generator():
 
 
 def fer_generator():
-    global image, image_lock
+    global image, image_lock, fer_processing_lock, fer_processing_event_exp
 
     fer_data = None
 
@@ -149,10 +151,10 @@ def fer_generator():
 
         img = cv2.imdecode(img, cv2.IMREAD_COLOR)
         # Acquire lock for fer processing information and get the information
-        if fer_processing_event.is_set():
+        if fer_processing_event_exp.is_set():
+            fer_processing_event_exp.clear()
             with fer_processing_lock:
                 fer_data = fer_processing
-            fer_processing_event.clear()
             print(f"Expression: {fer_data['exp']}\tProbabilities: {fer_data['exp_pdist']}")
 
         if fer_data is not None:
@@ -220,10 +222,7 @@ if __name__ == '__main__':
     fer_processing_thread = threading.Thread(target=fer_processor, args=(args.print, args.log), daemon=True)
     fer_processing_thread.start()
 
-    #fer_graphing_thread = threading.Thread(target=fer_graph_processor, daemon=True)
-    #fer_graphing_thread.start()
+    fer_graphing_thread = threading.Thread(target=fer_graph_processor, daemon=True)
+    fer_graphing_thread.start()
 
-    app_thread = threading.Thread(target=app.run, kwargs=dict(host=args.host, port=args.port, debug=args.debug))
-    app_thread.start()
-
-    fer_graph_processor()
+    app.run(host=args.host, port=args.port, debug=args.debug)
