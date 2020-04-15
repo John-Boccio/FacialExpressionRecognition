@@ -24,7 +24,7 @@ class ExpressionGraph(object):
             p, = self.ax.plot([], [], label=plot_labels[i])
             self.lines.append(p)
         handles, labels = self.ax.get_legend_handles_labels()
-        self.ax.legend(handles, labels, loc='center right', bbox_to_anchor=(1, 0.5))
+        self.ax.legend(handles, labels, loc='center left', bbox_to_anchor=(1, 0.5))
         self.frame_counter = 0
 
     def update(self, exp_pdist):
@@ -37,7 +37,7 @@ class ExpressionGraph(object):
 
     def get_img(self, ):
         buf = io.BytesIO()
-        self.fig.savefig(buf, format="jpg")
+        self.fig.savefig(buf, format="jpg", bbox_inches='tight')
         buf.seek(0)
         img_arr = np.frombuffer(buf.getvalue(), dtype=np.uint8)
         buf.close()
