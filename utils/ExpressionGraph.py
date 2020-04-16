@@ -14,14 +14,13 @@ class ExpressionGraph(object):
         plt.ylabel('Probability')
         plt.xlabel('Frames')
         plt.suptitle('Expressions Probability Distribtion')
-        plot_labels = ['ANGRY', 'DISGUST', 'FEAR', 'HAPPY', 'SAD', 'SURPRISE', 'NEUTRAL']
         self.ax = self.fig.add_subplot(111)
         self.exp_class = exp_class
         self.num_exp = len(self.exp_class)
         self.exp_names = [e.name for e in self.exp_class]
         self.lines = []
         for i in range(self.num_exp):
-            p, = self.ax.plot([], [], label=plot_labels[i])
+            p, = self.ax.plot([], [], label=self.exp_names[i])
             self.lines.append(p)
         handles, labels = self.ax.get_legend_handles_labels()
         self.ax.legend(handles, labels, loc='center left', bbox_to_anchor=(1, 0.5))
