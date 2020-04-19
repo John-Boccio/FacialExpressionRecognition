@@ -9,7 +9,7 @@ Description:
 from __future__ import print_function
 import numpy as np
 import cv2
-import face_recognition
+# import face_recognition
 from PIL import Image
 
 
@@ -36,6 +36,7 @@ def crop_faces(image):
     return crops
 
 
+"""
 def face_rec(image):
     face_landmarks_list = face_recognition.face_landmarks(image)
     face_locations = face_recognition.face_locations(image, number_of_times_to_upsample=0, model="cnn")
@@ -49,6 +50,7 @@ def face_rec(image):
         pil_image = Image.fromarray(face_image)
 
     return pil_image
+"""
 
 
 def histogram_equalization(image):
