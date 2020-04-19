@@ -105,6 +105,15 @@ parser.add_argument('--visdom', dest='visdom', action='store_true',
                     help='plot training progress using visdom')
 
 
+def img_to_rgb(img):
+    img = img.convert('RGB')
+    return img
+
+
+def img_to_255(img):
+    return img * 255
+
+
 def main():
     args = parser.parse_args()
 
@@ -150,11 +159,11 @@ def main_worker(gpu, ngpus_per_node, args):
         model = neural_nets.VggVdFaceFerDag()
         train_transform = None
         val_transform = transforms.Compose(
-                [transforms.Lambda(lambda x: x.convert('RGB')),
+                [transforms.Lambda(img_to_rgb),
                 transforms.Resize(model.meta["imageSize"][0]),
-                transforms.Lambda(adjust_gamma),
+                #transforms.Lambda(adjust_gamma),
                 transforms.ToTensor(),
-                transforms.Lambda(lambda x: x * 255),
+                transforms.Lambda(img_to_255),
                 transforms.Normalize(mean=model.meta["mean"], std=model.meta["std"])])
         if args.evaluate is not True:
             warnings.warn("Cannot train vggface, set mode to evaluation mode")
@@ -254,7 +263,8 @@ def main_worker(gpu, ngpus_per_node, args):
         num_workers=args.workers, pin_memory=True)
 
     if args.evaluate:
-        validate(test_loader, model, criterion, args, conf_mat=True)
+        avg_loss, avg_acc = validate(test_loader, model, criterion, args, conf_mat=True)
+        print(f"Evaluation results: Loss {avg_loss:.4e}\tAccuracy {avg_acc:6.5f}")
         return
 
     early_stop = EarlyStopping(patience=args.patience)
@@ -312,7 +322,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
-    acc = AverageMeter('Acc', ':6.2f')
+    acc = AverageMeter('Acc', ':6.5f')
     progress = ProgressMeter(
         len(train_loader),
         [batch_time, data_time, losses, acc],
@@ -360,7 +370,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 def validate(val_loader, model, criterion, args, conf_mat=False):
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
-    acc = AverageMeter('Acc', ':6.2f')
+    acc = AverageMeter('Acc', ':6.5f')
     progress = ProgressMeter(
         len(val_loader),
         [batch_time, losses, acc],

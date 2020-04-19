@@ -9,6 +9,8 @@ Description:
 from __future__ import print_function
 import numpy as np
 import cv2
+import face_recognition
+from PIL import Image
 
 
 def crop_faces(image):
@@ -34,6 +36,21 @@ def crop_faces(image):
     return crops
 
 
+def face_rec(image):
+    face_landmarks_list = face_recognition.face_landmarks(image)
+    face_locations = face_recognition.face_locations(image, number_of_times_to_upsample=0, model="cnn")
+
+    for face_location in face_locations:
+        # Print the location of each face in this image
+        top, right, bottom, left = face_location
+
+        # You can access the actual face itself like this:
+        face_image = image[top:bottom, left:right]
+        pil_image = Image.fromarray(face_image)
+
+    return pil_image
+
+
 def histogram_equalization(image):
     img = np.array(image)
     img_yuv = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
@@ -45,7 +62,7 @@ def histogram_equalization(image):
     return img_output
 
 
-def adjust_gamma(image, gamma=2.0):
+def adjust_gamma(image, gamma=1.25):
     image = np.array(image)
     # build a lookup table mapping the pixel values [0, 255] to
     # their adjusted gamma values

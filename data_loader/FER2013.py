@@ -13,6 +13,7 @@ Description:
 from torch.utils.data import Dataset
 from utils import DatasetType
 from image_processing import crop_faces
+from image_processing import face_rec
 from PIL import Image
 import ConfigParser as Cp
 import csv
@@ -70,7 +71,7 @@ class FER2013Dataset(Dataset):
                 if facecrop:
                     # Need to convert into 3 channel image
                     pixels = np.repeat(pixels[:, :, np.newaxis], 3, axis=2)
-                    faces = crop_faces(pixels)
+                    faces = face_rec(pixels)
                     if len(faces) != 1:
                         continue
                     pixels = cv2.cvtColor(faces[0]['img'], cv2.COLOR_RGB2GRAY)
