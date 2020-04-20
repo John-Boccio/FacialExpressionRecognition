@@ -2,6 +2,7 @@ import argparse
 import cv2
 import datetime
 import requests
+#Common use: python FlaskSend.py -a http://localhost:5000/video_feed
 
 from image_processing import crop_face_transform
 import utils
@@ -79,4 +80,3 @@ if __name__ == "__main__":
     send_frames(video, args.address, size=tuple(args.size), fps=args.fps, frames_to_send=args.frames, crop=args.crop,
                 print_interval=args.print, log=args.log)
     video.release()
-
