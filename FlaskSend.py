@@ -2,7 +2,6 @@ import argparse
 import cv2
 import datetime
 import requests
-#Common use: python FlaskSend.py -a http://localhost:5000/video_feed
 
 from image_processing import crop_face_transform
 import utils

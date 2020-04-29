@@ -1,6 +1,3 @@
-import matplotlib #;matplotlib.use("TkAgg")
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 from flask import Flask, Response, render_template, request
 from PIL import Image
 import argparse
@@ -15,8 +12,17 @@ import neural_nets
 import torchvision.transforms as transforms
 import image_processing
 
-import io
 
+parser = argparse.ArgumentParser(description='Host server to receive images')
+parser.add_argument('--host', dest='host', default=None, help="Web address to host the server")
+parser.add_argument('--port', dest='port', default=None, help="Port to host the server")
+parser.add_argument('--debug', dest='debug', action='store_true', help='Set server to debug mode')
+parser.add_argument('--print', dest='print', type=int, default=-1, help='Set the print interval for FER FPS statistics')
+parser.add_argument('--log-fer-processor', dest='log_fer_processor', default=None, help='File to log raw FPS data of the fer_processor to')
+parser.add_argument('--log-fer-generator', dest='log_fer_generator', default=None, help='File to log raw FPS data of the fer_generator to')
+parser.add_argument('--size', dest='size', nargs=2, type=int, default=[720, 480], metavar=('width', 'height'),
+                    help='Specify what size image to show on the front-end (default: 720 x 480)')
+args = parser.parse_args()
 
 # Contains the unprocessed image from video_feed
 image = {}
@@ -80,7 +86,7 @@ def fer_graph_processor():
 def fer_processor(print_interval=-1, log=None):
     global image, image_lock, image_event, fer_processing, fer_processing_lock, fer_processing_event_graph, fer_processing_event_exp
 
-    fps_tracker = utils.FpsTracker(print_interval=print_interval, log=log)
+    fps_tracker = utils.FpsTracker(name="fer_processor", print_interval=print_interval, log=log)
     while True:
         # Wait for a new image to process from video_feed
         image_event.wait()
@@ -138,6 +144,8 @@ def fer_generator():
 
     fer_data = None
 
+    fps_tracker = utils.FpsTracker(name="fer_generator", print_interval=args.print, log=f"{str(threading.get_ident())}_{args.log_fer_generator}")
+    fps_tracker.track()
     # Continuously loop over the frames received from /video_feed
     while True:
         # sleep until a new processed image comes
@@ -176,6 +184,8 @@ def fer_generator():
             # yield the output frame in the byte format
             yield b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(img) + b'\r\n'
 
+        fps_tracker.frame_sent()
+
 
 @app.route("/", methods=['GET'])
 def index():
@@ -206,20 +216,9 @@ def video_feed_receive(cropped, width, height):
     return Response(response=response, status=200, mimetype="application/json")
 
 
-parser = argparse.ArgumentParser(description='Host server to receive images')
-parser.add_argument('--host', dest='host', default=None, help="Web address to host the server")
-parser.add_argument('--port', dest='port', default=None, help="Port to host the server")
-parser.add_argument('--debug', dest='debug', action='store_true', help='Set server to debug mode')
-parser.add_argument('--print', dest='print', type=int, default=-1, help='Set the print interval for FER FPS statistics')
-parser.add_argument('--log', dest='log', default=None, help='File to log raw FPS data to')
-parser.add_argument('--size', dest='size', nargs=2, type=int, default=[720, 480], metavar=('width', 'height'),
-                    help='Specify what size image to show on the front-end (default: 720 x 480)')
-args = parser.parse_args()
-
-
 if __name__ == '__main__':
     # Start the thread that will be doing the facial expression recognition on the received images
-    fer_processing_thread = threading.Thread(target=fer_processor, args=(args.print, args.log), daemon=True)
+    fer_processing_thread = threading.Thread(target=fer_processor, args=(args.print, args.log_fer_processor), daemon=True)
     fer_processing_thread.start()
 
     fer_graphing_thread = threading.Thread(target=fer_graph_processor, daemon=True)

@@ -2,17 +2,19 @@ import time
 
 
 class FpsTracker(object):
-    def __init__(self, fps_limit=-1, average_over=10, print_interval=-1, log=None, flush_interval=1):
+    def __init__(self, name="FPS Tracker", fps_limit=-1, average_over=10, print_interval=-1, log=None, flush_interval=1):
         """
         FpsTracker allows you to track the amount of frames you have sent and limit your FPS. The FPS is calculated by
         using a moving average over n samples.
 
+        :param name: name used when printing
         :param fps_limit: specify the maximum FPS you'd like to process, if <= 0 then it will run as fast as possible
         :param average_over: number of samples to use for moving average
         :param print_interval: frame_sent will print the current fps statistics if this amount of time in ms has passed
             since the last time it printed. Use -1 if you would not like to print.
         :param log: file to log raw FPS data to, will not perform logging if 'None'.
         """
+        self.name = name
         self.fps_limit = fps_limit if fps_limit > 0 else -1
         self.average_over = average_over
         self.print_interval = print_interval
@@ -62,7 +64,7 @@ class FpsTracker(object):
         if self.print_interval >= 0:
             time_elapsed = current_time - self.last_print_time
             if time_elapsed > self.print_interval:
-                print(f"Frames sent: {self.frames_sent:6d}\tFPS: {self.fps:4.4f}")
+                print(f"{self.name} - Frames sent: {self.frames_sent:6d}\tFPS: {self.fps:4.4f}")
                 self.last_print_time = self.current_time_ms()
 
     def track(self):
