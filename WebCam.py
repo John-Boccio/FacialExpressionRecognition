@@ -48,8 +48,7 @@ while capture_forever or captured_frames < args.frames:
         break
     captured_frames += 1
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    faces = image_processing.crop_faces(rgb_frame)
-    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    faces = image_processing.crop_faces(rgb_frame, fx=0.2, fy=0.2)
 
     for f in faces:
         x, y = f["coord"]

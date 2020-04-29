@@ -13,10 +13,11 @@ import cv2
 from PIL import Image
 
 
-def crop_faces(image):
+def crop_faces(image, fx=1, fy=1):
     face_data = "./image_processing/resources/haarcascade_frontalface_default.xml"
     cascade = cv2.CascadeClassifier(face_data)
 
+    image = cv2.resize(image, (0, 0), fx=fx, fy=fy)
     opencv_img = np.array(image)
     minisize = (opencv_img.shape[1], opencv_img.shape[0])
     miniframe = cv2.resize(opencv_img, minisize)
@@ -25,6 +26,10 @@ def crop_faces(image):
     crops = []
     for f in faces:
         x, y, w, h = [v for v in f]
+        x *= int(1/fx)
+        w *= int(1/fx)
+        y *= int(1/fy)
+        h *= int(1/fy)
         sub_face = opencv_img[y:y + h, x:x + h]
         crop = {
             "coord": (x, y),
