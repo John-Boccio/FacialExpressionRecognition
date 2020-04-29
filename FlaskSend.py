@@ -67,7 +67,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--size', dest='size', nargs=2, type=int, default=[360, 240], metavar=('width', 'height'),
                         help='Specify what size the image sent should be (default: 360 x 240)')
     parser.add_argument('-p', '--print', dest='print', type=int, default=-1,
-                        help='Specify what size the image sent should be')
+                        help='Print interval for the FPS tracker')
     parser.add_argument('-l', '--log', dest='log', default=None,
                         help='File to log raw FPS data to')
     args = parser.parse_args()
