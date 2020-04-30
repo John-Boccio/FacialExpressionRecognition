@@ -206,11 +206,14 @@ def main_worker(gpu, ngpus_per_node, args):
             model = torch.nn.DataParallel(model).cuda()
 
     # define loss function (criterion), optimizer, and learning rate scheduler
-    criterion = nn.CrossEntropyLoss(weight=torch.tensor([0.86084503, 0.98481312, 0.85729214, 0.74868508, 0.83176008, 0.88954683, 0.82705772])).cuda(args.gpu)
+    criterion = nn.CrossEntropyLoss(weight=torch.tensor([0.86084503, 0.98481312, 0.85729214, 0.74868508, 0.83176008, 0.88954683, 0.82705772]))
     optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                 momentum=args.momentum,
                                 weight_decay=args.weight_decay)
     lr_sched = torch.optim.lr_scheduler.StepLR(optimizer, 15, gamma=.5)
+
+    if torch.cuda.is_available():
+        criterion = criterion.cuda(args.gpu)
 
     best_acc = 0
     start_epoch = 0
@@ -267,10 +270,7 @@ def main_worker(gpu, ngpus_per_node, args):
         return
 
     if args.reuse_dataset is not None and not os.path.exists(args.reuse_dataset):
-        reuse_dataset = {}
-        reuse_dataset["train"] = train_set
-        reuse_dataset["val"] = val_set
-        reuse_dataset["test"] = test_set
+        reuse_dataset = {"train": train_set, "val": val_set, "test": test_set}
         pickle.dump(reuse_dataset, open(args.reuse_dataset, "wb"))
         print(f"=> saved dataset to {args.reuse_dataset}")
 
