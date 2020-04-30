@@ -38,6 +38,7 @@ import neural_nets
 from utils import FerPlusExpression, FerExpression
 from utils import DatasetType
 from utils import VisdomLinePlotter
+from utils import graph_training
 from image_processing import histogram_equalization
 from image_processing import adjust_gamma
 
@@ -102,7 +103,7 @@ parser.add_argument('--seed', default=None, type=int,
                     help='seed for initializing training')
 parser.add_argument('--gpu', default=None, type=int,
                     help='GPU id to use.')
-parser.add_argument('--early-stopping', dest='early_stopping', action='store_false',
+parser.add_argument('--early-stopping', dest='early_stopping', action='store_true',
                     help='run training with early stopping enabled')
 parser.add_argument('--patience', default=20, type=int, dest='patience', metavar='patience',
                     help='patience to use for early stopping if it is enabled')
@@ -205,16 +206,18 @@ def main_worker(gpu, ngpus_per_node, args):
             model = torch.nn.DataParallel(model).cuda()
 
     # define loss function (criterion), optimizer, and learning rate scheduler
-    criterion = nn.CrossEntropyLoss().cuda(args.gpu)
+    criterion = nn.CrossEntropyLoss(weight=torch.tensor([0.86084503, 0.98481312, 0.85729214, 0.74868508, 0.83176008, 0.88954683, 0.82705772])).cuda(args.gpu)
     optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                 momentum=args.momentum,
                                 weight_decay=args.weight_decay)
-    lr_sched = torch.optim.lr_scheduler.StepLR(optimizer, 30, gamma=.1)
+    lr_sched = torch.optim.lr_scheduler.StepLR(optimizer, 15, gamma=.5)
 
     best_acc = 0
     start_epoch = 0
     train_losses = []
     val_losses = []
+    train_accs = []
+    val_accs = []
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
@@ -229,6 +232,8 @@ def main_worker(gpu, ngpus_per_node, args):
             best_acc = checkpoint['acc']
             train_losses = checkpoint['train_losses']
             val_losses = checkpoint['val_losses']
+            train_accs = checkpoint['train_accs']
+            val_accs = checkpoint['val_accs']
             if args.gpu is not None:
                 # best_acc may be from a checkpoint from a different GPU
                 best_acc = best_acc.to(args.gpu)
@@ -291,17 +296,19 @@ def main_worker(gpu, ngpus_per_node, args):
         # train for one epoch
         loss, train_acc = train(train_loader, model, criterion, optimizer, epoch, args)
         train_losses.append(loss)
+        train_accs.append(train_acc)
         lr_sched.step(epoch)
 
         # evaluate on validation set
         loss, val_acc = validate(val_loader, model, criterion, args)
         val_losses.append(loss)
+        val_accs.append(val_acc)
 
         if plotter is not None:
             plotter.plot('loss', 'train', 'Loss', epoch, train_losses[-1])
             plotter.plot('loss', 'val', 'Loss', epoch, val_losses[-1])
-            plotter.plot('acc', 'train', 'Accuracy', epoch, train_acc)
-            plotter.plot('acc', 'val', 'Accuracy', epoch, val_acc)
+            plotter.plot('acc', 'train', 'Accuracy', epoch, train_accs[-1])
+            plotter.plot('acc', 'val', 'Accuracy', epoch, val_accs[-1])
 
         # remember best acc and save checkpoint
         if val_acc > best_acc:
@@ -313,6 +320,8 @@ def main_worker(gpu, ngpus_per_node, args):
                 'acc': val_acc,
                 'train_losses': train_losses,
                 'val_losses': val_losses,
+                'train_accs': train_accs,
+                'val_accs': val_accs,
                 'optimizer': optimizer.state_dict(),
                 'lr_scheduler': lr_sched.state_dict(),
             }
@@ -325,6 +334,8 @@ def main_worker(gpu, ngpus_per_node, args):
             'acc': val_acc,
             'train_losses': train_losses,
             'val_losses': val_losses,
+            'train_accs': train_accs,
+            'val_accs': val_accs,
             'optimizer': optimizer.state_dict(),
             'lr_scheduler': lr_sched.state_dict(),
         }
@@ -334,6 +345,8 @@ def main_worker(gpu, ngpus_per_node, args):
             early_stop(val_acc)
             if early_stop.early_stop:
                 print("Early Stopping detected: Ending training and saving model")
+                graph_training(train_losses, val_losses, "Loss", "losses.png", draw_early_stopping=True)
+                graph_training(train_accs, val_accs, "Accuracy", "accuracy.png", draw_early_stopping=False)
                 break
 
 

@@ -82,19 +82,20 @@ class VisdomLinePlotter(object):
                           name=split_name, update='append')
 
 
-def graph_losses(train_losses, val_losses, save_path="losses.png"):
+def graph_training(train_stats, val_stats, name, save_path, draw_early_stopping=False):
     """ https://github.com/Bjarten/early-stopping-pytorch/blob/master/MNIST_Early_Stopping_example.ipynb """
-    plt.plot(range(0, len(train_losses)), train_losses, label='Training Loss')
-    plt.plot(range(0, len(val_losses)), val_losses, label='Validation Loss')
+    plt.plot(range(0, len(train_stats)), train_stats, label=f'Training {name}')
+    plt.plot(range(0, len(val_stats)), val_stats, label=f'Validation {name}')
 
-    # find position of lowest validation loss
-    minposs = val_losses.index(min(val_losses))
-    plt.axvline(minposs, linestyle='--', color='r', label='Early Stopping Checkpoint')
+    if draw_early_stopping:
+        # find position of lowest validation loss
+        minposs = val_stats.index(min(val_stats))
+        plt.axvline(minposs, linestyle='--', color='r', label='Early Stopping Checkpoint')
 
-    plt.xlabel('epochs')
-    plt.ylabel('loss')
-    plt.ylim(0, max(max(train_losses), max(val_losses)) + 0.25)     # consistent scale
-    plt.xlim(0, len(train_losses)+1)                                # consistent scale
+    plt.xlabel('Epochs')
+    plt.ylabel(name)
+    plt.ylim(0, max(max(train_stats), max(val_stats)) + 0.25)     # consistent scale
+    plt.xlim(0, len(train_stats)+1)                                # consistent scale
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
