@@ -13,6 +13,7 @@ import os
 import random
 import time
 import warnings
+import pickle
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -67,6 +68,10 @@ parser.add_argument('--dataset', dest='dataset', metavar='DATA', default='fer201
                     help='datasets: ' +
                          ' | '.join(model_names) +
                          ' (default: fer2013)')
+parser.add_argument('--reuse-dataset', dest='reuse_dataset', type=str, default=None, 
+                    help="Specify a path to a pickled train set for the specified 'dataset'. If the "
+                    "path exists, then it will be loaded from the pickle file, else it will parse "
+                    "the dataset and save it to the specified path.")
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 parser.add_argument('--epochs', default=100, type=int, metavar='N',
@@ -238,7 +243,13 @@ def main_worker(gpu, ngpus_per_node, args):
     cudnn.benchmark = True
 
     # Data loading code
-    if args.dataset == "fer2013":
+    if args.reuse_dataset is not None and os.path.exists(args.reuse_dataset):
+        reuse_dataset = pickle.load(open(args.reuse_dataset, "rb"))
+        train_set = reuse_dataset["train"]
+        val_set = reuse_dataset["val"]
+        test_set = reuse_dataset["test"]
+        print(f"=> loaded dataset from {args.reuse_dataset}")
+    elif args.dataset == "fer2013":
         train_set = dl.FER2013Dataset(ferplus=False, set_type=DatasetType.TRAIN, tf=train_transform)
         val_set = dl.FER2013Dataset(ferplus=False, set_type=DatasetType.VALIDATION, tf=val_transform)
         test_set = dl.FER2013Dataset(ferplus=False, set_type=DatasetType.TEST, tf=val_transform)
@@ -249,6 +260,14 @@ def main_worker(gpu, ngpus_per_node, args):
     else:
         warnings.warn(f"Invalid dataset choice: {args.dataset}")
         return
+
+    if args.reuse_dataset is not None and not os.path.exists(args.reuse_dataset):
+        reuse_dataset = {}
+        reuse_dataset["train"] = train_set
+        reuse_dataset["val"] = val_set
+        reuse_dataset["test"] = test_set
+        pickle.dump(reuse_dataset, open(args.reuse_dataset, "wb"))
+        print(f"=> saved dataset to {args.reuse_dataset}")
 
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=args.batch_size, shuffle=True,
