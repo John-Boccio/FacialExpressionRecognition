@@ -101,7 +101,7 @@ def fer_processor(print_interval=-1, log=None):
         # Process the image and make it available for the fer_generator
         np_img = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
         if not cropped:
-            face = image_processing.crop_face_transform(np_img)
+            face = image_processing.crop_face_transform(np_img, fx=0.2, fy=0.2)
             pil_img = Image.fromarray(face['img'])
             transformed_img = vgg_transform(pil_img)
             expression, exp_pdist = utils.get_expression(model, transformed_img, need_softmax=True)

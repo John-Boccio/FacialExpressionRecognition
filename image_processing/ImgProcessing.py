@@ -13,7 +13,7 @@ import cv2
 from PIL import Image
 
 
-def crop_faces(image, fx=1, fy=1):
+def crop_faces(image, fx=1.0, fy=1.0):
     face_data = "./image_processing/resources/haarcascade_frontalface_default.xml"
     cascade = cv2.CascadeClassifier(face_data)
 
@@ -82,8 +82,8 @@ def adjust_gamma(image, gamma=1.25):
     return gc
 
 
-def crop_face_transform(image):
-    faces = crop_faces(image)
+def crop_face_transform(image, fx=1.0, fy=1.0):
+    faces = crop_faces(image, fx=fx, fy=fy)
     if len(faces) == 0:
         return {'img': image, 'coord': (0, 0), 'size': (image.shape[0], image.shape[1])}
     return faces[0]

@@ -8,8 +8,11 @@ Description:
     VGG model trained for FER2013.
     http://www.robots.ox.ac.uk/~albanie/pytorch-models.html
 """
+import os
+
 import torch
 import torch.nn as nn
+import wget
 
 
 class VggVdFaceFerDag(nn.Module):
@@ -55,6 +58,10 @@ class VggVdFaceFerDag(nn.Module):
         self.fc7 = nn.Linear(in_features=4096, out_features=4096, bias=True)
         self.relu7 = nn.ReLU()
         self.fc8 = nn.Linear(in_features=4096, out_features=7, bias=True)
+
+        if not os.path.exists("metadata/neural_nets/vgg_vd_face_fer_dag.pth"):
+            download_url = "http://www.robots.ox.ac.uk/~albanie/models/pytorch-mcn/vgg_vd_face_fer_dag.pth"
+            wget.download(download_url, "metadata/neural_nets/vgg_vd_face_fer_dag.pth", bar=wget.bar_thermometer)
 
         state_dict = torch.load("./metadata/neural_nets/vgg_vd_face_fer_dag.pth")
         self.load_state_dict(state_dict)
