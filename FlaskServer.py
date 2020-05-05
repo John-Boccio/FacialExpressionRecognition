@@ -3,6 +3,7 @@ from PIL import Image
 import argparse
 import threading
 import json
+import logging
 import cv2
 import numpy as np
 import torch
@@ -101,7 +102,7 @@ def fer_processor(print_interval=-1, log=None):
         # Process the image and make it available for the fer_generator
         np_img = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
         if not cropped:
-            face = image_processing.crop_face_transform(np_img, fx=0.2, fy=0.2)
+            face = image_processing.crop_face_transform(np_img, fx=0.5, fy=0.5)
             pil_img = Image.fromarray(face['img'])
             transformed_img = vgg_transform(pil_img)
             expression, exp_pdist = utils.get_expression(model, transformed_img, need_softmax=True)
@@ -144,7 +145,8 @@ def fer_generator():
 
     fer_data = None
 
-    fps_tracker = utils.FpsTracker(name="fer_generator", print_interval=args.print, log=f"{str(threading.get_ident())}_{args.log_fer_generator}")
+    log = None if args.log_fer_generator is None else f"{str(threading.get_ident())}_{args.log_fer_generator}"
+    fps_tracker = utils.FpsTracker(name="fer_generator", print_interval=args.print, log=log)
     fps_tracker.track()
     # Continuously loop over the frames received from /video_feed
     while True:
@@ -217,6 +219,10 @@ def video_feed_receive(cropped, width, height):
 
 
 if __name__ == '__main__':
+    # Disable Flask logging
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
+
     # Start the thread that will be doing the facial expression recognition on the received images
     fer_processing_thread = threading.Thread(target=fer_processor, args=(args.print, args.log_fer_processor), daemon=True)
     fer_processing_thread.start()

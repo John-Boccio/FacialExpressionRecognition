@@ -69,7 +69,6 @@ class FpsTracker(object):
 
     def track(self):
         self.last_frame_sent_time = self.current_time_ms()
-        self.last_print_time = self.current_time_ms()
 
     def reset_fps(self):
         self.fps = 0
